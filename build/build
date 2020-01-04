@@ -1,0 +1,52 @@
+#!/bin/sh
+
+folders=(FireFox Chrome)
+scripts=(content background popup options)
+outFolder=$1
+srcFolder=../src
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+if [ "$outFolder" != "debug" ] && [ "$outFolder" != "release" ]; then
+    echo 'argument must be debug or release'
+    exit
+fi
+
+cd $DIR
+echo building
+
+
+rm -rf $outFolder
+mkdir $outFolder
+
+for folder in ${folders[*]}
+do
+    cp -aR $srcFolder $outFolder/$folder
+    cp -aR ../icons $outFolder/$folder/
+done
+
+for script in ${scripts[*]}
+do
+    browserify $srcFolder/$script.js > $script.js
+    for folder in ${folders[*]}
+    do
+        cp $script.js $outFolder/$folder/
+    done
+    rm -rf $script.js
+done
+
+for folder in ${folders[*]}
+do
+    python3 editManifest.py $srcFolder $outFolder $folder "${folders[*]}"
+    python3 editScripts.py $outFolder/$folder $outFolder
+done
+
+if [ "$outFolder" == "release" ]; then
+    for folder in ${folders[*]}
+    do
+        cd $DIR/$outFolder/$folder
+        zip -rX $DIR/$outFolder/$folder.zip ./*
+    done
+fi
+
+echo finished

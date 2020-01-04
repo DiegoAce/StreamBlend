@@ -1,0 +1,76 @@
+
+.lightTheme {
+    --back: #FFFFFF;
+    --text: #000000;
+    --hover: #E8E8E8;
+    --border: #EEEEEE;
+}
+
+.darkTheme {
+    --back: #000000;
+    --text: #DDDDDD;
+    --hover: #222222;
+    --border: #222222;
+}
+
+body {
+    overflow: auto;
+    background: var(--back);
+    color: var(--text);
+}
+
+.title {
+    margin: 1em auto;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.infoText {
+    text-align: center;
+    max-width: 700px;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+.leftText {
+    text-align: left;
+}
+
+.separation {
+    margin-top: 40px;
+}
+
+.button {
+    display: inline-block;
+    margin: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    min-width: 80px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border: 2px solid var(--text);
+    border-radius: 10px;
+    cursor: pointer;
+    background: var(--back);
+}
+
+.button:hover {
+    background-color: var(--hover);
+}
+
+.noDisplay {
+    display: none;
+}
+
+img {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+}
