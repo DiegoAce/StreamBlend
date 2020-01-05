@@ -3,12 +3,14 @@
     --back: #FFFFFF;
     --text: #000000;
     --hover: #E8E8E8;
+    --activityText: #666666;
 }
 
 .darkTheme {
     --back: #000000;
     --text: #DDDDDD;
     --hover: #222222;
+    --activityText: #999999;
 }
 
 body {
@@ -55,6 +57,10 @@ body {
 
 .userName {
     font-weight: bold;
+}
+
+.activityName {
+    color: var(--activityText);
 }
 
 .leftText {

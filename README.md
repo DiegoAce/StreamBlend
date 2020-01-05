@@ -7,7 +7,7 @@ StreamBlend is a browser extension that blends your [Mixer](http://mixer.com), [
 If you have questions, concerns, need help, or just want to say hi, you can reach us at streamblend@gmail.com.
 
 ## How To Use
-1. Install the extension from the [Google Web Store](https://chrome.google.com/webstore/detail/streamblend/abc) or [Firefox Addon Store](https://addons.mozilla.org/en-US/firefox/addon/streamblend/).
+1. Install the extension from the [Google Web Store](https://chrome.google.com/webstore/detail/streamblend/pnmdaomfddabinbchojcemjbmnaekbnf) or [Firefox Addon Store](https://addons.mozilla.org/en-US/firefox/addon/streamblend/).
 2. Add your follows.
     - Click on the StreamBlend icon in the browser toolbar.
     - Click Settings.
@@ -23,8 +23,8 @@ StreamBlend is free and open source! You can help by contributing a pull request
 Head over to the [Issues](https://github.com/DiegoAce/StreamBlend/issues) page and create a new issue. We appreciate it!
 
 ## How to Build
-1. Create client keys from websites like [Mixer OAuth](https://mixer.com/lab/oauth). (Either change or make sure your `redirectUri` matches those in `src/agents.js`)
-2. Add your keys to `src/keysExample.js`, and rename it to `keys.js`
-3. Make sure you have `python3` installed
+1. Make sure you have `python3` and [browserify](http://browserify.org/) installed.
+2. Create client keys from websites like [Mixer OAuth](https://mixer.com/lab/oauth). (Either change or make sure your `redirectUri` matches those in `src/agents.js`)
+3. Add your keys to `src/keysExample.js`, and rename it to `keys.js`
 4. Open up a terminal and `cd` to the `build` folder of this repo.
 5. Run the command: `./build debug` or `./build release`.
