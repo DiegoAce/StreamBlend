@@ -4,6 +4,7 @@
     --text: #000000;
     --hover: #E8E8E8;
     --activityText: #666666;
+    --gear: .4;
 }
 
 .darkTheme {
@@ -11,6 +12,7 @@
     --text: #DDDDDD;
     --hover: #222222;
     --activityText: #999999;
+    --gear: .8;
 }
 
 body {
@@ -23,7 +25,30 @@ body {
 .title {
     font-size: 85%;
     color: #888888;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.gear {
+    display:inline-block;
+    width: 55px;
+    height: 35px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    cursor: pointer;
+}
+
+.gear:hover {
+    background-color: var(--hover);
+}
+
+.gearImg {
+    filter: brightness(var(--gear));
+    height: 50%;
+    width: auto;
+    position: absolute;
+    top: 7px;
+    right: 16px;
 }
 
 .channels {
@@ -102,6 +127,7 @@ body {
 
 .loader {
     margin-left: 90px;
+    margin-bottom: 10px;
     border: 6px solid #f3f3f3; /* Light grey */
     border-top: 6px solid #3498db; /* Blue */
     border-radius: 50%;

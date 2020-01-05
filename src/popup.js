@@ -11,8 +11,8 @@ let channelsElement = document.getElementById('channelsId');
 let errorTextElement = document.getElementById('errorTextId');
 let noStreamTextElement = document.getElementById('noStreamTextId');
 
-let settingsButton = document.getElementById('settingsButton');
-settingsButton.addEventListener("click", (event)=>
+let gearButton = document.getElementById('gearId');
+gearButton.addEventListener("click", (event)=>
 {
     chrome.tabs.create({url: 'options.html'});
 });
