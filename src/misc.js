@@ -67,6 +67,7 @@ module.exports = {
     
     runFetch: (url, method, params, headers, callback) =>
     {
+        DEBUG(LOG('fetch', url, params, headers));
         fetch(url, {...params, ...{method: method, headers: {...headers, ...{'Accept': 'application/json', 'Content-Type': 'application/json'}}}})
         .then((res) =>
         {
@@ -90,6 +91,7 @@ module.exports = {
     
     fetchHtml: (url, params, callback) =>
     {
+        DEBUG(LOG('fetchHtml', url, params));
         fetch(url, params)
         .then((res) =>
         {

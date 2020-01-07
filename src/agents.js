@@ -281,18 +281,23 @@ class Twitch extends Agent
                             self.updateFollowData(follows, 'userId', d.id, {userName: d.display_name, avatarUrl: d.profile_image_url, link: 'https://www.twitch.tv/' + d.login});
                         self.makeRequest(streamsUrl, {}, (res) =>
                         {
-                            let gamesUrl = 'https://api.twitch.tv/helix/games?';
-                            for (let d of res.data)
+                            if (res.data && res.data.length > 0)
                             {
-                                self.updateFollowData(follows, 'userId', d.user_id, {activityId: d.game_id, online: d.type === 'live', viewerCount: d.viewer_count});
-                                gamesUrl += 'id=' + d.game_id + '&';
-                            }
-                            self.makeRequest(gamesUrl, {}, (res) =>
-                            {
+                                let gamesUrl = 'https://api.twitch.tv/helix/games?';
                                 for (let d of res.data)
-                                    self.updateFollowData(follows, 'activityId', d.id, {activityName: d.name});
+                                {
+                                    self.updateFollowData(follows, 'userId', d.user_id, {activityId: d.game_id, online: d.type === 'live', viewerCount: d.viewer_count});
+                                    gamesUrl += 'id=' + d.game_id + '&';
+                                }
+                                self.makeRequest(gamesUrl, {}, (res) =>
+                                {
+                                    for (let d of res.data)
+                                        self.updateFollowData(follows, 'activityId', d.id, {activityName: d.name});
+                                    getStreamPage(streamFollowIndex + MaxItems);
+                                }, callback);
+                            }
+                            else
                                 getStreamPage(streamFollowIndex + MaxItems);
-                            }, callback);
                         }, callback);
                     }, callback);
                 }
