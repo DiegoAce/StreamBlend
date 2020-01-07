@@ -10,9 +10,11 @@ If you have questions, concerns, need help, or just want to say hi, you can reac
 1. Install the extension from the [Google Web Store](https://chrome.google.com/webstore/detail/streamblend/pnmdaomfddabinbchojcemjbmnaekbnf) or [Firefox Addon Store](https://addons.mozilla.org/en-US/firefox/addon/streamblend/).
 2. Add your follows.
     - Click on the StreamBlend icon in the browser toolbar.
-    - Click Settings.
-    - Click Link Mixer, Link Twitch, etc. (No data is sent to us. Only between you and the website.)
+    - Click the gear icon.
+    - Click Link Mixer, Link Twitch, etc.
 3. Click on the StreamBlend icon in the browser toolbar to see your follows, or visit [Twitch.tv](https://www.twitch.tv) to see your follows merged in the sidebar.
+
+No data is ever sent to us. Only between you and the websites.
 
 ## Help Out
 StreamBlend is free and open source! You can help by contributing a pull request, filling out a bug report, sending an email, or by donating to show your support and allow us to put more time into it.

@@ -10,7 +10,7 @@ let optionsTabId = 0;
 function checkChromeError()
 {
     if (chrome.runtime.lastError)
-        LOG(chrome.runtime.lastError.message);
+        LOG('chrome error:', chrome.runtime.lastError.message);
 }
 
 function updateError()

@@ -74,10 +74,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>
                     if (!anyRefreshing)
                         loaderElement.style.display = 'none';
                     if (!anyRefreshing && !channelsElement.firstChild)
-                    {
-                        LOG(anyRefreshing, channelsElement.firstChild);
                         noStreamTextElement.style.display = 'inline-block';
-                    }
                 });
             }
         }

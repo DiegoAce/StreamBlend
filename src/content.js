@@ -106,7 +106,7 @@ function updateFollowElements()
                 let index = twitchFollowViewers.findIndex(n => n < f.viewerCount);
                 if (index === -1)
                 {
-                    if (twitchFollowReruns > 0 || !showMoreButtonExists)
+                    if (twitchFollowReruns > 0 || twitchFollowOfflines > 0 || !showMoreButtonExists)
                     {
                         index = twitchFollowViewers.length;
                         twitchFollowViewers.splice(index, 0, f.viewerCount);
@@ -163,11 +163,14 @@ for (let a of agentManager.agents)
 
 let mutationObserver = new MutationObserver((mutations) =>
 {
-    if (document.readyState !== 'loading') {
-        LOG("mutating");
+    if (document.readyState !== 'loading')
+    {
+        LOG("side nav mutated");
         let update = false;
-        for (let m of mutations) {
-            const elementsContainAllNodes = (elements, nodes) => {
+        for (let m of mutations)
+        {
+            const elementsContainAllNodes = (elements, nodes) =>
+            {
                 for (let node of nodes)
                     if (!elements.includes(node))
                         return false;
@@ -176,14 +179,17 @@ let mutationObserver = new MutationObserver((mutations) =>
             if (!elementsContainAllNodes(removedElements, m.removedNodes) || !elementsContainAllNodes(currentElements, m.addedNodes))
                 update = true;
         }
-        if (update) {
+        if (update)
             updateFollowElements();
-        }
     }
 });
-mutationObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: false,
-    characterData: false
-});
+
+let observerInterval = setInterval(()=>
+{
+    let sideNav = document.querySelector('.side-nav');
+    if (!sideNav)
+        return;
+    mutationObserver.observe(sideNav, {childList: true, subtree: true});
+    LOG('observing side nav');
+    clearInterval(observerInterval);
+}, 1000);

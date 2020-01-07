@@ -175,7 +175,7 @@ class Agent
                             callback();
                         }
                         else
-                            this.saveAuth(res.access_token, res.refresh_token == null || res.refresh_token.length === 0 ? this.refreshToken : res.refreshToken, res.expires_in, ()=>{ this.refreshFollows(callback); });
+                            this.saveAuth(res.access_token, (!res.refresh_token || res.refresh_token.length === 0) ? this.refreshToken : res.refresh_token, res.expires_in, ()=>{ this.refreshFollows(callback); });
                     });
                 }
                 else
