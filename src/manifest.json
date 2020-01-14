@@ -2,7 +2,7 @@
     
     "manifest_version": 2,
     "name": "StreamBlend",
-    "version": "1.5",
+    "version": "1.7",
     "description": "Blends your follows from multiple sites into one list.",
     "icons": {
         "16": "images/16.png",
@@ -12,7 +12,6 @@
         "128": "images/128.png"
     },
     "permissions": [
-        "tabs",
         "storage",
         "*://*.mixer.com/*",
         "*://*.twitch.tv/*",
