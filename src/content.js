@@ -3,8 +3,7 @@
 const LOG = require('./log');
 const Constants = require('./constants');
 const Misc = require('./misc');
-const Agents = require('./agents');
-let agentManager = new Agents.AgentManager();
+let {agents, twitch} = require('./agents');
 
 let currentElements = [];
 let removedElements = [];
@@ -12,7 +11,6 @@ let removedElements = [];
 function updateFollowElements()
 {
     LOG("updateFollowElements");
-    let twitch = agentManager.agents.find((a)=>{ return a.name === 'Twitch'; });
     removedElements = currentElements;
     for (let e of currentElements)
         e.remove();
@@ -77,7 +75,7 @@ function updateFollowElements()
     }
     twitchFollowViewers.sort((a, b)=>{ return b-a });
     
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         if (a === twitch || !a.follows)
             continue;
@@ -127,13 +125,19 @@ function updateFollowElements()
     }
 }
 
+function refresh()
+{
+    for (let a of agents)
+        a.sendMsgRefreshFollows();
+}
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
 {
     LOG("content received message:", request.type);
     switch (request.type)
     {
     default:
-        for (let a of agentManager.agents)
+        for (let a of agents)
         {
             switch (request.type)
             {
@@ -151,14 +155,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
 });
 
 chrome.runtime.sendMessage({type: Constants.ContentTabIdMsg});
-
-function refresh()
-{
-    for (let a of agentManager.agents)
-        a.sendMsgRefreshFollows();
-}
-refresh();
-setInterval(refresh, 30 * 1000);
 
 let mutationObserver = new MutationObserver((mutations) =>
 {
@@ -191,5 +187,7 @@ let observerInterval = setInterval(()=>
     mutationObserver.observe(sideNav, {childList: true, subtree: true});
     LOG('observing side nav');
     clearInterval(observerInterval);
+    refresh();
+    setInterval(refresh, 30 * 1000);
 }, 1000);
 

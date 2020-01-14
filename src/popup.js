@@ -3,8 +3,7 @@
 const LOG = require('./log');
 const Misc = require('./misc');
 const Constants = require('./constants');
-const Agents = require('./agents');
-let agentManager = new Agents.AgentManager();
+let {agents} = require('./agents');
 
 let loaderElement = document.getElementById('loaderId');
 let channelsElement = document.getElementById('channelsId');
@@ -17,7 +16,7 @@ chrome.storage.local.get([Constants.DarkModeName], (items)=>{ document.body.clas
 
 async function setErrorElement()
 {
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         if (await a.getError())
         {
@@ -31,7 +30,7 @@ async function setErrorElement()
 function updateFollowElements()
 {
     let follows = [];
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         if (a.follows)
         {
@@ -63,7 +62,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
     switch (request.type)
     {
     default:
-        for (let a of agentManager.agents)
+        for (let a of agents)
         {
             switch (request.type)
             {
@@ -72,7 +71,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
                 break;
             case a.msgFollowsRefreshed:
                 let anyRefreshing = false;
-                for (let a2 of agentManager.agents)
+                for (let a2 of agents)
                     anyRefreshing |= await a2.getRefreshingFollows();
                 a.follows = await a.getFollows();
                 updateFollowElements();
@@ -91,5 +90,5 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
 });
 
 setErrorElement();
-for (let a of agentManager.agents)
+for (let a of agents)
     a.sendMsgRefreshFollows();

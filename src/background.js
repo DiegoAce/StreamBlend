@@ -3,13 +3,12 @@
 const LOG = require('./log');
 const Misc = require('./misc');
 const Constants = require('./constants');
-const Agents = require('./agents');
-let agentManager = new Agents.AgentManager();
+let {agents} = require('./agents');
 let tabIds = {};
 
 async function setErrorBadge()
 {
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         if (await a.getError())
         {
@@ -33,7 +32,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
         tabIds.options = sender.tab.id;
         break;
     default:
-        for (let a of agentManager.agents)
+        for (let a of agents)
         {
             switch (request.type)
             {
@@ -54,7 +53,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) =>
 {
     for (let key in changes)
     {
-        for (let a of agentManager.agents)
+        for (let a of agents)
         {
             switch (key)
             {
@@ -73,7 +72,7 @@ let oauthIFrameElement = document.createElement('iframe');
 oauthIFrameElement.id = Constants.OAuthIFrameId;
 document.body.appendChild(oauthIFrameElement);
 setErrorBadge();
-for (let a of agentManager.agents)
+for (let a of agents)
     a.setRefreshingFollows(false);
 
 

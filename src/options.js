@@ -3,8 +3,7 @@
 const LOG = require('./log');
 const Misc = require('./misc');
 const Constants = require('./constants');
-const Agents = require('./agents');
-let agentManager = new Agents.AgentManager();
+let {agents, ConnectType} = require('./agents');
 let errorElement = document.getElementById('errorId');
 let connectElement = document.getElementById('connectId');
 let colorElement = document.getElementById('colorId');
@@ -25,7 +24,7 @@ function setColorScheme(toggle)
 async function setErrors()
 {
     let nodes = [];
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         let error = await a.getError();
         if (error)
@@ -52,7 +51,7 @@ async function setAgentConnect(a)
     let userName = await a.getUserName();
     switch (a.connectType)
     {
-    case Agents.ConnectType.UserName:
+    case ConnectType.UserName:
         if (userName)
         {
             a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
@@ -69,7 +68,7 @@ async function setAgentConnect(a)
             a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'none';
         }
         break;
-    case Agents.ConnectType.OAuth:
+    case ConnectType.OAuth:
         if (userName)
         {
             a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'inline';
@@ -97,7 +96,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
     case Constants.OAuthMsg:
         if (sender.tab)
         {
-            for (let a of agentManager.agents)
+            for (let a of agents)
             {
                 if (sender.tab.id === a.oauthTabId)
                 {
@@ -110,7 +109,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
         }
         break;
     default:
-        for (let a of agentManager.agents)
+        for (let a of agents)
         {
             switch (request.type)
             {
@@ -129,21 +128,21 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 colorElement.onclick = (element)=>{ setColorScheme(true); };
 document.getElementById('refreshFollowsId').onclick = async (element)=>
 {
-    for (let a of agentManager.agents)
+    for (let a of agents)
     {
         await a.setTimeFollowsRefreshed(0);
         a.sendMsgRefreshFollows();
     }
 };
 
-for (let a of agentManager.agents)
+for (let a of agents)
 {
     a.errorElement = document.createElement('div');
     a.connectElement = document.createElement('div');
     connectElement.appendChild(a.connectElement);
     switch (a.connectType)
     {
-    case Agents.ConnectType.UserName:
+    case ConnectType.UserName:
         a.connectElement.innerHTML =    '<div class="row"> \
                                             <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
                                             <input class="joinedInput" placeholder="Enter your '+ a.name + ' ' + a.userNameDescription + '"> \
@@ -172,7 +171,7 @@ for (let a of agentManager.agents)
             }
         });
         break;
-    case Agents.ConnectType.OAuth:
+    case ConnectType.OAuth:
         a.connectElement.innerHTML =    '<div class="row"> \
                                             <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
                                             <div class="singleButton">Connect ' + a.name + '</div> \

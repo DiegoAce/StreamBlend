@@ -334,22 +334,10 @@ class YouTube extends Agent
     }
 }
 
-class AgentManager
-{
-    constructor()
-    {
-        this.agents = [new Mixer(), new Twitch(), new DLive(), new YouTube()];
-    }
-    getError()
-    {
-        for (let a of this.agents)
-            if (a.error.length > 0)
-                return a.name + ' ' + a.error + ' error. Please try to Link again in the Settings.';
-        return '';
-    }
-}
+let twitch = new Twitch();
 
 module.exports = {
-    AgentManager: AgentManager,
+    agents: [new Mixer(), twitch, new DLive(), new YouTube()],
+    twitch: twitch,
     ConnectType: ConnectType
 }
