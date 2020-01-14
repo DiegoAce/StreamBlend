@@ -1,9 +1,13 @@
 'use strict';
 
-const {LOG} = require('./log');
-const Keys = require('./keys');
+const LOG = require('./log');
 const Constants = require('./constants');
 const Misc = require('./misc');
+
+const ConnectType = Object.freeze({
+    UserName: 1,
+    OAuth: 2
+});
 
 class Follow
 {
@@ -15,6 +19,7 @@ class Follow
         this.online = false;
         this.viewerCount = 0;
         this.link = '';
+        this.userNameDescription = '';
         for (let key in obj)
           this[key] = obj[key];
     }
@@ -22,208 +27,84 @@ class Follow
 
 class Agent
 {
-    constructor()
+    constructor(name)
     {
-        this.name;
-        this.accessToken;
-        this.refreshToken;
-        this.expiration;
-        this.clientSecret = '';
-        this.scope = '';
-        this.follows = [];
-        this.timeFollowsRefreshed;
-        this.error = '';
-    }
-    authAccessTokenName() { return this.name + 'AuthAccessToken'; }
-    authRefreshTokenName() { return this.name + 'AuthRefreshToken'; }
-    authExpirationName() { return this.name + 'AuthExpiration'; }
-    followsName() { return this.name + 'Follows'; }
-    timeFollowsRefreshedName() { return this.name + 'TimeFollowsRefreshed'; }
-    linkMsg() { return this.name + 'Link'; }
-    removeMsg() { return this.name + 'Remove'; }
-    readyMsg() { return this.name + 'Ready'; }
-    refreshFollowsMsg() { return this.name + 'RefreshFollows'; }
-    followsRefreshedMsg() { return this.name + 'FollowsRefreshed'; }
-    loadAuth(callback)
-    {
-        chrome.storage.local.get([this.authAccessTokenName(), this.authRefreshTokenName(), this.authExpirationName()], (items) =>
+        this.name = name;
+        this.connectType = ConnectType.UserName;
+        for (let varName of ['Error', 'UserName', 'UserId', 'AccessToken', 'Follows', 'TimeFollowsRefreshed', 'RefreshingFollows'])
         {
-            if (this.authAccessTokenName() in items && this.authRefreshTokenName() in items && this.authExpirationName() in items)
-            {
-                this.accessToken = items[this.authAccessTokenName()];
-                this.refreshToken = items[this.authRefreshTokenName()];
-                this.expiration = items[this.authExpirationName()];
-                callback(this.accessToken != null && this.refreshToken != null && this.expiration != null);
-            }
-            else
-                callback(false);
-        });
-    }
-    saveAuth(access, refresh, expiresIn, callback)
-    {
-        this.accessToken = access;
-        this.refreshToken = refresh;
-        this.expiration = Date.now() + expiresIn * 1000;
-        chrome.storage.local.set({[this.authAccessTokenName()]: this.accessToken, [this.authRefreshTokenName()]: this.refreshToken, [this.authExpirationName()]: this.expiration}, () =>
-        {
-            LOG("saved auth", this.name);
-            callback();
-        });
-    }
-    resetStoredAuth(callback)
-    {
-        this.saveAuth(null, null, 0, callback);
-        this.clearFollows(()=>{});
-    }
-    loadFollows(callback)
-    {
-        chrome.storage.local.get([this.followsName(), this.timeFollowsRefreshedName()], (items) =>
-        {
-            if (this.followsName() in items && this.timeFollowsRefreshedName() in items)
-            {
-                this.follows = items[this.followsName()];
-                this.timeFollowsRefreshed = items[this.timeFollowsRefreshedName()];
-                callback(this.follows != null && this.timeFollowsRefreshed != null);
-            }
-            else
-                callback(false);
-        });
-    }
-    saveFollows(follows, callback)
-    {
-        this.follows = follows;
-        this.timeFollowsRefreshed = Date.now();
-        chrome.storage.local.set({[this.followsName()]: this.follows, [this.timeFollowsRefreshedName()]: this.timeFollowsRefreshed}, () =>
-        {
-            LOG("saved follows", this.name);
-            callback();
-        });
-    }
-    clearFollows(callback)
-    {
-        this.follows = [];
-        this.timeFollowsRefreshed = 0;
-        chrome.storage.local.set({[this.followsName()]: this.follows, [this.timeFollowsRefreshedName()]: this.timeFollowsRefreshed}, () =>
-        {
-            LOG("cleared follows", this.name);
-            callback();
-        });
-    }
-    getAdditionalCodeUriParams(){ return {}; }
-    getCodeUrl()
-    {
-        return Misc.getUrl(this.authUri, {...{client_id: this.clientId, redirect_uri: this.redirectUri, response_type: 'code', scope: this.scope}, ...this.getAdditionalCodeUriParams()});
-    }
-    authorize(callback)
-    {
-        let self = this;
-        this.error = '';
-        function authCodeListener(tabId, changeInfo, tab)
-        {
-            if(tab.url.indexOf(Constants.OAuthCallbackName) === -1 || tab.url.indexOf('code=') === -1 || tab.url.indexOf('two_factor') !== -1)
-                return;
-            let code = Misc.getUrlParam(tab.url, 'code');
-            DEBUG(LOG('got code', self.name, code));
-            chrome.tabs.onUpdated.removeListener(authCodeListener);
-            chrome.tabs.remove(tab.id);
-            Misc.fetchPost(self.tokenUri, {client_id: self.clientId, client_secret: self.clientSecret, code: code, grant_type: 'authorization_code', redirect_uri: self.redirectUri}, {}, (res, error)=>
-            {
-                DEBUG(LOG(self.name, res));
-                if (error)
-                {
-                    self.error = 'authorization code';
-                    callback(false);
-                }
-                else
-                    self.saveAuth(res.access_token, res.refresh_token, res.expires_in, ()=>{ callback(true); });
-            });
+            this['var' + varName] = this.name + varName;
+            this['set' + varName] = (x)=>{ return new Promise((resolve)=>{ chrome.storage.local.set({[this.name + varName]: x}, ()=>{ LOG('set' + this.name + varName, x); resolve(); }); }); }
+            this['get' + varName] = ()=>{ return new Promise((resolve)=>{ chrome.storage.local.get([this.name + varName], (obj)=>{ LOG('get' + this.name + varName, Object.values(obj)[0]); resolve(Object.values(obj)[0]); }); }); }
         }
-        chrome.tabs.onUpdated.addListener(authCodeListener);
-        chrome.tabs.query({}, (tabs) => {
-            for (let tab of tabs)
-                authCodeListener(null, null, tab);
-        });
-    }
-    refreshFollows(callback)
-    {
-        this.loadAuth((res)=>
+        for (let varName of ['Error', 'RefreshFollows', 'FollowsRefreshed'])
         {
-            if (!res)
+            this['msg' + varName] = this.name + varName;
+            this['sendMsg' + varName] = (tabIds)=>
             {
-                LOG(this.name, 'not linked');
-                callback();
-                return;
+                chrome.runtime.sendMessage({type: this.name + varName});
+                if (tabIds)
+                    for (let tabId of Object.values(tabIds))
+                        chrome.tabs.sendMessage(tabId, {type: this.name + varName});
             }
-            this.loadFollows((res)=>
-            {
-                if (res && Date.now() < this.timeFollowsRefreshed + Constants.RefreshFollowTime)
-                {
-                    LOG('Not refreshing.', this.name + ' refreshed ' + String((Date.now() - this.timeFollowsRefreshed)/1000) + ' seconds ago');
-                    callback();
-                    return;
-                }
-                this.error = '';
-                if (Date.now() >= this.expiration)
-                {
-                    LOG('expired', this.name);
-                    Misc.fetchPost(this.tokenUri, {client_id: this.clientId, client_secret: this.clientSecret, grant_type: 'refresh_token', refresh_token: this.refreshToken}, {}, (res, error)=>
-                    {
-                        DEBUG(LOG(this.name, res));
-                        if (error)
-                        {
-                            self.error = 'refresh token';
-                            callback();
-                        }
-                        else
-                            this.saveAuth(res.access_token, (!res.refresh_token || res.refresh_token.length === 0) ? this.refreshToken : res.refresh_token, res.expires_in, ()=>{ this.refreshFollows(callback); });
-                    });
-                }
-                else
-                {
-                    LOG(this.name, 'starting requests');
-                    this.startRequests(callback);
-                }
-            });
-        });
+        }
     }
-    updateFollowData(follows, matchKey, matchValue, updateData)
+    async setOAuthError() { await this.setError(this.name + ' authentication error.'); }
+    async setUserNameError() { await this.setError(this.name + ' ' + this.userNameDescription + ' not found.'); }
+    async setFollowError() { await this.setError(this.name + ' could not get follows. Try again later or try reconnecting the account.'); }
+    async authorize(data)
     {
-        let matches = [];
-        for (let f of follows)
-            if (f[matchKey] === matchValue)
-                matches.push(f);
-        for (let f of matches)
-            for (let key in updateData)
-                f[key] = updateData[key];
+        await this.setError('');
+        await this.setRefreshingFollows(false);
+        await this.setAuth(data);
     }
-    startRequests(callback){}
-    makeRequest(url, params, resCallback, errorCallback)
+    async hiddenAuthorize()
     {
-        Misc.fetchGet(url, params, {'Authorization': 'Bearer ' + this.accessToken}, (res, error)=>
+        return new Promise(async (resolve)=>
         {
-            DEBUG(LOG(this.name, res));
-            if (error)
+            let oauthIFrameElement = document.getElementById(Constants.OAuthIFrameId);
+            if (!oauthIFrameElement)
+                return resolve();
+            let listener = async (request, sender, sendResponse)=>
             {
-                this.error = 'request';
-                errorCallback();
-            }
-            else
-                resCallback(res);
+                if (request.type === Constants.OAuthMsg)
+                {
+                    chrome.runtime.onMessage.removeListener(listener);
+                    await this.authorize(sender.url);
+                    resolve();
+                }
+            };
+            chrome.runtime.onMessage.addListener(listener);
+            oauthIFrameElement.src = await this.getAuthUrl();
         });
     }
-    makeRequestHtml(url, params, resCallback, errorCallback)
+    async refreshFollows()
     {
-        Misc.fetchHtml(url, params, (res, error)=>
+        if (!(await this.getUserName()))
         {
-            DEBUG(LOG(this.name, res));
-            if (error)
-            {
-                this.error = 'requesthtml';
-                errorCallback();
-            }
-            else
-                resCallback(res);
-        });
+            LOG(this.name, 'not connected');
+            await this.setFollows([]);
+            return
+        }
+        let timeFollowsRefreshed = await this.getTimeFollowsRefreshed();
+        if (timeFollowsRefreshed && Date.now() < timeFollowsRefreshed + 5 * 60 * 1000)
+            return LOG(this.name, 'Not refreshing. Refreshed ' + String((Date.now() - timeFollowsRefreshed)/1000) + ' seconds ago');
+        if (await this.getRefreshingFollows())
+            return LOG(this.name, 'currently refreshing');
+        await this.setRefreshingFollows(true);
+        await this.setError('');
+        let follows = await this.getNewFollows();
+        if (!follows && this.connectType === ConnectType.OAuth)
+        {
+            await this.hiddenAuthorize();
+            follows = await this.getNewFollows();
+        }
+        if (follows)
+        {
+            await this.setFollows(follows);
+            await this.setTimeFollowsRefreshed(Date.now());
+        }
+        await this.setRefreshingFollows(false);
     }
 }
 
@@ -231,81 +112,75 @@ class Twitch extends Agent
 {
     constructor()
     {
-        super();
-        this.name = 'Twitch';
-        this.authUri = 'https://id.twitch.tv/oauth2/authorize';
-        this.tokenUri = 'https://id.twitch.tv/oauth2/token';
-        this.clientId = Keys.TwitchClientId;
-        this.clientSecret = Keys.TwitchClientSecret;
-        this.redirectUri = 'http://localhost/' + Constants.OAuthCallbackName;
+        super('Twitch');
+        this.userNameDescription = 'login name';
+        this.headers = {'Client-ID': 'vc9ta3qi9it37arr8en37ovx1hgmvl'};
     }
-    startRequests(callback)
+    async setAuth(userName)
     {
-        this.makeRequest('https://api.twitch.tv/helix/users', {}, (res) =>
+        let response = await Misc.fetchGet('https://api.twitch.tv/helix/users', {login: userName}, this.headers);
+        if (!response || !response.data || !response.data[0] || !response.data[0].login || !response.data[0].id)
+            return await this.setUserNameError();
+        await this.setUserName(response.data[0].login);
+        await this.setUserId(response.data[0].id);
+    }
+    async getNewFollows()
+    {
+        let userId = await this.getUserId();
+        let follows = [];
+        let getFollowPage = async (page)=>
         {
-            let self = this;
-            let userId = res.data[0].id;
-            let page = '';
-            let follows = [];
-            function getFollowPage()
+            let response = await Misc.fetchGet('https://api.twitch.tv/helix/users/follows', {from_id: userId, first: 100, after: page}, this.headers);
+            if (!response)
+                return await this.setFollowError();
+            for (let user of response.data)
+                follows.push(new Follow({userId: user.to_id}));
+            if (response.pagination && response.pagination.cursor)
+                return await getFollowPage(response.pagination.cursor);
+            else
+                return await getStreamPage(0);
+        };
+        let getStreamPage = async (streamFollowIndex)=>
+        {
+            if (streamFollowIndex < follows.length)
             {
-                self.makeRequest('https://api.twitch.tv/helix/users/follows', {from_id: userId, first: 100, after: page}, (res) =>
+                const MaxItems = 100;
+                let currentFollows = follows.slice(streamFollowIndex, MaxItems);
+                let usersUrl = 'https://api.twitch.tv/helix/users?';
+                let streamsUrl = 'https://api.twitch.tv/helix/streams?';
+                for (let f of currentFollows)
                 {
-                    for (let user of res.data)
-                        follows.push(new Follow({userId: user.to_id}));
-                    if (!Misc.objectEmpty(res.pagination))
-                    {
-                        page = res.pagination.cursor;
-                        getFollowPage();
-                    }
-                    else
-                        getStreamPage(0);
-                }, callback);
-            }
-            function getStreamPage(streamFollowIndex)
-            {
-                if (streamFollowIndex < follows.length)
-                {
-                    const MaxItems = 100;
-                    let currentFollows = follows.slice(streamFollowIndex, MaxItems);
-                    let usersUrl = 'https://api.twitch.tv/helix/users?';
-                    let streamsUrl = 'https://api.twitch.tv/helix/streams?';
-                    for (let f of currentFollows)
-                    {
-                        usersUrl += 'id=' + f.userId + '&';
-                        streamsUrl += 'user_id=' + f.userId + '&';
-                    }
-                    self.makeRequest(usersUrl, {}, (res) =>
-                    {
-                        for (let d of res.data)
-                            self.updateFollowData(follows, 'userId', d.id, {userName: d.display_name, avatarUrl: d.profile_image_url, link: 'https://www.twitch.tv/' + d.login});
-                        self.makeRequest(streamsUrl, {}, (res) =>
-                        {
-                            if (res.data && res.data.length > 0)
-                            {
-                                let gamesUrl = 'https://api.twitch.tv/helix/games?';
-                                for (let d of res.data)
-                                {
-                                    self.updateFollowData(follows, 'userId', d.user_id, {activityId: d.game_id, online: d.type === 'live', viewerCount: d.viewer_count});
-                                    gamesUrl += 'id=' + d.game_id + '&';
-                                }
-                                self.makeRequest(gamesUrl, {}, (res) =>
-                                {
-                                    for (let d of res.data)
-                                        self.updateFollowData(follows, 'activityId', d.id, {activityName: d.name});
-                                    getStreamPage(streamFollowIndex + MaxItems);
-                                }, callback);
-                            }
-                            else
-                                getStreamPage(streamFollowIndex + MaxItems);
-                        }, callback);
-                    }, callback);
+                    usersUrl += 'id=' + f.userId + '&';
+                    streamsUrl += 'user_id=' + f.userId + '&';
                 }
-                else
-                    self.saveFollows(follows, ()=>{ callback(); });
+                let response = await Misc.fetchGet(usersUrl, {}, this.headers);
+                if (!response)
+                    return await this.setFollowError();
+                for (let d of response.data)
+                    Misc.updateMatchingObjects(follows, 'userId', d.id, {userName: d.display_name, avatarUrl: d.profile_image_url, link: 'https://www.twitch.tv/' + d.login});
+                response = await Misc.fetchGet(streamsUrl, {}, this.headers);
+                if (!response)
+                    return await this.setFollowError();
+                if (response.data && response.data.length > 0)
+                {
+                    let gamesUrl = 'https://api.twitch.tv/helix/games?';
+                    for (let d of response.data)
+                    {
+                        Misc.updateMatchingObjects(follows, 'userId', d.user_id, {activityId: d.game_id, online: d.type === 'live', viewerCount: d.viewer_count});
+                        gamesUrl += 'id=' + d.game_id + '&';
+                    }
+                    response = await Misc.fetchGet(gamesUrl, {}, this.headers);
+                    if (!response)
+                        return await this.setFollowError();
+                    for (let d of response.data)
+                        Misc.updateMatchingObjects(follows, 'activityId', d.id, {activityName: d.name});
+                }
+                return await getStreamPage(streamFollowIndex + MaxItems);
             }
-            getFollowPage();
-        }, callback);
+            else
+                return follows;
+        };
+        return await getFollowPage('');
     }
 }
 
@@ -313,36 +188,66 @@ class Mixer extends Agent
 {
     constructor()
     {
-        super();
-        this.name = 'Mixer';
-        this.authUri = 'https://mixer.com/oauth/authorize';
-        this.tokenUri = 'https://mixer.com/api/v1/oauth/token';
-        this.clientId = Keys.MixerClientId;
-        this.clientSecret = Keys.MixerClientSecret;
-        this.redirectUri = 'https://' + Constants.OAuthCallbackName;
-        this.scope = 'channel:details:self';
+        super('Mixer');
+        this.userNameDescription = 'username';
     }
-    startRequests(callback)
+    async setAuth(userName)
     {
-        this.makeRequest('https://mixer.com/api/v1/users/current', {}, (res) =>
+        let response = await Misc.fetchGet('https://mixer.com/api/v1/channels/' + userName, {}, {});
+        if (!response || !response.userId)
+            return await this.setUserNameError();
+        await this.setUserName(response.token);
+        await this.setUserId(response.userId);
+    }
+    async getNewFollows()
+    {
+        let userId = await this.getUserId();
+        let follows = [];
+        let getFollowPage = async (page)=>
         {
-            let self = this;
-            let follows = [];
-            function getFollowPage(page)
-            {
-                self.makeRequest('https://mixer.com/api/v1/users/' + res.id + '/follows', {page: page, limit: 100}, (res) =>
-                {
-                    DEBUG(LOG(self.name, res));
-                    for (let r of res)
-                        follows.push(new Follow({userName: r.user.username, activityName: r.type.name, avatarUrl: r.user.avatarUrl, online: r.online, viewerCount: r.viewersCurrent, link: 'https://mixer.com/' + r.user.username}));
-                    if (!Misc.objectEmpty(res))
-                        getFollowPage(page + 1);
-                    else
-                        self.saveFollows(follows, ()=>{ callback(); });
-                }, callback);
-            }
-            getFollowPage(0);
-        }, callback);
+            let response = await Misc.fetchGet('https://mixer.com/api/v1/users/' + userId + '/follows', {page: page, limit: 100}, {});
+            if (!response)
+                return await this.setFollowError();
+            for (let r of response)
+                follows.push(new Follow({userName: r.user.username, activityName: r.type.name, avatarUrl: r.user.avatarUrl, online: r.online, viewerCount: r.viewersCurrent, link: 'https://mixer.com/' + r.user.username}));
+            if (!Misc.objectEmpty(response))
+                return await getFollowPage(page + 1);
+            return follows;
+        };
+        return await getFollowPage(0);
+    }
+}
+
+class DLive extends Agent
+{
+    constructor()
+    {
+        super('DLive');
+        this.userNameDescription = 'display name';
+    }
+    async setAuth(displayName)
+    {
+        let response = await Misc.fetchPost('https://graphigo.prd.dlive.tv/', {query: 'query{userByDisplayName(displayname: "' + displayName + '") {username displayname}}'}, {});
+        if (!response || !response.data || !response.data.userByDisplayName || !response.data.userByDisplayName.displayname)
+            return await this.setUserNameError();
+        await this.setUserName(response.data.userByDisplayName.displayname);
+    }
+    async getNewFollows()
+    {
+        let displayName = await this.getUserName();
+        let follows = [];
+        let getFollowPage = async (cursor)=>
+        {
+            let response = await Misc.fetchPost('https://graphigo.prd.dlive.tv/', {query: 'query{userByDisplayName(displayname: "' + displayName + '") {following(first:50 after:"' + cursor + '"){pageInfo{endCursor hasNextPage} list{displayname avatar livestream{watchingCount title category{title}}}}}}'}, {});
+            if (!response || !response.data || !response.data.userByDisplayName || !response.data.userByDisplayName.following)
+                return await this.setFollowError();
+            for (let f of response.data.userByDisplayName.following.list)
+                follows.push(new Follow({userName: f.displayname, activityName: f.livestream ? f.livestream.category.title : '', avatarUrl: f.avatar, online: f.livestream, viewerCount: f.livestream ? f.livestream.watchingCount : 0, link: 'https://dlive.tv/' + f.displayname}));
+            if (response.data.userByDisplayName.following.pageInfo.hasNextPage)
+                return await getFollowPage(response.data.userByDisplayName.following.pageInfo.endCursor);
+            return follows;
+        };
+        return await getFollowPage(0);
     }
 }
 
@@ -350,96 +255,82 @@ class YouTube extends Agent
 {
     constructor()
     {
-        super();
-        this.name = 'YouTube';
-        this.authUri = 'https://accounts.google.com/o/oauth2/v2/auth';
-        this.tokenUri = 'https://oauth2.googleapis.com/token';
-        this.apiKey = Keys.YouTubeApiKey;
-        this.clientId = Keys.YouTubeClientId;
-        this.clientSecret = Keys.YouTubeClientSecret;
-        this.redirectUri = 'http://localhost/' + Constants.OAuthCallbackName;
-        this.scope = 'https://www.googleapis.com/auth/youtube.readonly';
+        super('YouTube');
+        this.connectType = ConnectType.OAuth;
     }
-    getAdditionalCodeUriParams()
+    async getAuthUrl()
     {
-        return {access_type: 'offline'};
+        let params = {client_id: '692437206912-o65sokucfei9f74gjbu7ppf6sprci07k.apps.googleusercontent.com', redirect_uri: 'https://streamblend.github.io/oauth', response_type: 'token', scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly', prompt: 'select_account'};
+        let userName = await this.getUserName();
+        if (userName)
+            params = {...params, ...{prompt: 'none', login_hint: userName}}
+        return Misc.getUrl('https://accounts.google.com/o/oauth2/v2/auth', params);
     }
-    startRequests(callback)
+    async setAuth(url)
     {
-        let self = this;
+        let token = Misc.getUrlParam(url, 'access_token');
+        if (!token)
+            return await this.setOAuthError();
+        LOG(this.name, 'got token', token);
+        let response = await Misc.fetchGet('https://www.googleapis.com/oauth2/v2/userinfo', {}, {'Authorization': 'Bearer ' + token});
+        if (!response || !response.email)
+            return await this.setOAuthError();
+        await this.setAccessToken(token);
+        await this.setUserName(response.email);
+    }
+    async getNewFollows()
+    {
+        let token = await this.getAccessToken();
         let follows = [];
-        function getSubscriptionPage(page)
+        let getSubscriptionPage = async (page)=>
         {
-            self.makeRequest('https://www.googleapis.com/youtube/v3/subscriptions', {part: 'snippet', mine: true, key: self.apiKey, maxResults: 50, pageToken: page}, (res) =>
-            {
-                DEBUG(LOG(self.name, res));
-                for (let i of res.items)
-                    follows.push(new Follow({channelId: i.snippet.resourceId.channelId, userName: i.snippet.title, avatarUrl: i.snippet.thumbnails.default.url, link: 'https://www.youtube.com/channel/' + i.snippet.resourceId.channelId}));
-                if ('nextPageToken' in res && res['nextPageToken'] !== undefined && res['nextPageToken'].length > 0)
-                    getSubscriptionPage(res['nextPageToken']);
-                else
-                    getFollowHtmls();
-            }, callback);
-        }
-        function getFollowHtmls()
+            let response = await Misc.fetchGet('https://www.googleapis.com/youtube/v3/subscriptions', {part: 'snippet', mine: true, maxResults: 50, pageToken: page}, {'Authorization': 'Bearer ' + token});
+            if (!response)
+                return await this.setFollowError();
+            for (let i of response.items)
+                follows.push(new Follow({channelId: i.snippet.resourceId.channelId, userName: i.snippet.title, avatarUrl: i.snippet.thumbnails.default.url, link: 'https://www.youtube.com/channel/' + i.snippet.resourceId.channelId}));
+            if (response.nextPageToken)
+                return await getSubscriptionPage(response.nextPageToken);
+            else
+                return await getFollowHtmls();
+        };
+        let getFollowHtmls = async ()=>
         {
-            let numResults = 0;
-            for (let f of follows)
+            let promises = [];
+            let length = follows.length;
+            for (let i = 0; i < length; i++)
             {
-                function end()
+                promises.push(Misc.fetchHtml('https://m.youtube.com/channel/' + follows[i].channelId + '/videos?view=2&live_view=501&flow=list&app=m', {}, {})
+                .then(async (response)=>
                 {
-                    numResults++;
-                    if (numResults >= follows.length)
-                        self.saveFollows(follows, ()=>{ callback(); });
-                }
-                self.makeRequestHtml('https://www.youtube.com/channel/' + f.channelId, {}, (res) =>
-                {
-                    DEBUG(LOG(self.name, res));
-                    function testIndex(index)
+                    if (!response)
+                        return;
+                    let index = 0;
+                    let vidStr = 'compactVideoRenderer';
+                    while (1)
                     {
+                        index = response.indexOf(vidStr, index);
                         if (index === -1)
-                        {
-                            end();
-                            return false;
-                        }
-                        return true;
+                            return;
+                        index += vidStr.length;
+                        let vid;
+                        try { vid = JSON.parse(Misc.getEnclosingBracketString(response, index)); }
+                        catch(e) { LOG(e); return; }
+                        LOG('vid', vid)
+                        if (!vid || !vid.videoId || !vid.title || !vid.title.runs || !vid.title.runs[0] || !vid.title.runs[0].text || !vid.viewCountText || !vid.viewCountText.runs || !vid.viewCountText.runs[0] || !vid.viewCountText.runs[0].text || vid.viewCountText.runs[0].text.indexOf('watching') === -1)
+                            continue;
+                        let properties = {duplicate: true, online: true, viewerCount: Number(vid.viewCountText.runs[0].text.replace(/\D/g,'')), link: 'https://www.youtube.com/watch?v=' + vid.videoId, activityName: vid.title.runs[0].text};
+                        if (!follows[i].duplicate)
+                            follows[i] = {...follows[i], ...properties};
+                        else
+                            follows.push(Object.assign({}, {...follows[i], ...properties}));
                     }
-                    let numStartStr = '"viewCountText":{"runs":[{"text":"';
-                    let numEndStr = ' watching';
-                    let vidStartStr = '"videoId":"';
-                    let vidEndStr = '"';
-                    let titleStartStr = '}},"simpleText":"';
-                    let titleEndStr = '"';
-                    let numStartIndex = res.indexOf(numStartStr);
-                    if (!testIndex(numStartIndex))
-                        return;
-                    let numEndIndex = res.indexOf(numEndStr, numStartIndex + numStartStr.length);
-                    if (!testIndex(numEndIndex))
-                        return;
-                    let vidStartIndex = res.indexOf(vidStartStr, numEndIndex + numEndStr.length);
-                    if (!testIndex(vidStartIndex))
-                        return;
-                    let vidEndIndex = res.indexOf(vidEndStr, vidStartIndex + vidStartStr.length);
-                    if (!testIndex(vidEndIndex))
-                        return;
-                    let titleStartIndex = res.lastIndexOf(titleStartStr, numStartIndex);
-                    if (titleStartIndex !== -1)
-                    {
-                        let titleEndIndex = res.indexOf(titleEndStr, titleStartIndex + titleStartStr.length);
-                        if (titleEndIndex !== -1)
-                            f.activityName = res.substring(titleStartIndex + titleStartStr.length, titleEndIndex);
-                    }
-                    f.online = true;
-                    f.viewerCount = Number(res.substring(numStartIndex + numStartStr.length, numEndIndex).replace(',', ''));
-                    f.link = 'https://www.youtube.com/watch?v=' + res.substring(vidStartIndex + vidStartStr.length, vidEndIndex);
-                    end();
-                }, () =>
-                {
-                    end();
-                });
+                }));
             }
-        }
-        getSubscriptionPage('');
+            await Promise.all(promises);
+            return follows;
+        };
+        return await getSubscriptionPage('');
     }
 }
 
@@ -447,7 +338,7 @@ class AgentManager
 {
     constructor()
     {
-        this.agents = [new Mixer(), new Twitch(), new YouTube()];
+        this.agents = [new Mixer(), new Twitch(), new DLive(), new YouTube()];
     }
     getError()
     {
@@ -459,5 +350,6 @@ class AgentManager
 }
 
 module.exports = {
-    AgentManager: AgentManager
+    AgentManager: AgentManager,
+    ConnectType: ConnectType
 }

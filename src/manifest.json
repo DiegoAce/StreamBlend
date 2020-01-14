@@ -5,22 +5,21 @@
     "version": "1.5",
     "description": "Blends your follows from multiple sites into one list.",
     "icons": {
-        "16": "icons/16.png",
-        "48": "icons/48.png",
-        "96": "icons/96.png",
-        "128": "icons/128.png"
+        "16": "images/16.png",
+        "32": "images/32.png",
+        "48": "images/48.png",
+        "96": "images/96.png",
+        "128": "images/128.png"
     },
     "permissions": [
         "tabs",
         "storage",
-        "*://mixer.com/*",
         "*://*.mixer.com/*",
-        "*://twitch.tv/*",
         "*://*.twitch.tv/*",
-        "*://googleapis.com/*",
+        "*://*.google.com/*",
         "*://*.googleapis.com/*",
-        "*://youtube.com/*",
-        "*://*.youtube.com/*"
+        "*://*.youtube.com/*",
+        "*://*.dlive.tv/*"
     ],
     "options_ui": {
         "page": "options.html"
@@ -32,14 +31,20 @@
         {
             "matches": ["*://*.twitch.tv/*"],
             "js": ["content.js"]
+        },
+        {
+            "matches": ["https://streamblend.github.io/oauth"],
+            "js": ["oauth.js"],
+            "all_frames": true
         }
     ],
     "browser_action": {
         "default_icon": {
-            "16": "icons/16.png",
-            "48": "icons/48.png",
-            "96": "icons/96.png",
-            "128": "icons/128.png"
+            "16": "images/16.png",
+            "32": "images/32.png",
+            "48": "images/48.png",
+            "96": "images/96.png",
+            "128": "images/128.png"
         },
         "default_title": "StreamBlend",
         "default_popup": "popup.html"

@@ -1,5 +1,5 @@
 
-.lightTheme {
+.lightScheme {
     --back: #FFFFFF;
     --text: #000000;
     --hover: #E8E8E8;
@@ -7,12 +7,27 @@
     --gear: .4;
 }
 
-.darkTheme {
+.darkScheme {
     --back: #000000;
     --text: #DDDDDD;
     --hover: #222222;
     --activityText: #999999;
     --gear: .8;
+}
+
+@font-face {
+  font-family: texgyreheros;
+  src: url(fonts/texgyreheros-regular.woff);
+}
+
+@font-face {
+  font-family: texgyreheros;
+  src: url(fonts/texgyreheros-bold.woff);
+  font-weight: bold;
+}
+
+a {
+    all: unset;
 }
 
 body {
@@ -21,16 +36,17 @@ body {
     overflow-y: scroll;
     background: var(--back);
     color: var(--text);
+    font-family: texgyreheros;
+    font-size: 12px;
 }
 
 .title {
-    font-size: 85%;
     color: #888888;
     margin-bottom: 15px;
 }
 
 .gear {
-    display:inline-block;
+    display: inline-block;
     width: 55px;
     height: 35px;
     position: absolute;
@@ -52,88 +68,91 @@ body {
     right: 16px;
 }
 
-.channels {
-    margin-bottom: 10px;
+.error {
+    position: absolute;
+    top: 0px;
+    right: 10px;
+    color: #C80000;
+    font-size: 16px;
+    font-weight: bold;
+    transform: scale(1.2,1);
 }
 
-.channel, .button {
+.emptyText {
+    display: none;
+    display: block;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.channel {
+    position: relative;
+    display: block;
     height: 40px;
-    text-align: left;
-}
-
-.button {
     cursor: pointer;
 }
 
-.button:hover {
+.channel:hover {
     background-color: var(--hover);
-}
-
-.innerText {
-    float: left;
-    margin-left: 10px;
-    margin-top: 6px;
-    line-height: 15px;
-    font-size: 85%;
-    width: 115px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.userName {
-    font-weight: bold;
-}
-
-.activityName {
-    color: var(--activityText);
-}
-
-.leftText {
-    line-height: 40px;
-    margin-left: 10px;
-    float: left;
-    font-size: 85%;
-}
-
-.rightText {
-    line-height: 40px;
-    margin-right: 10px;
-    float: right;
-    font-size: 85%;
-}
-
-.errorText {
-    display: none;
-    margin-bottom: 10px;
-    text-align: left;
-    color: #BB0000;
-}
-
-.noDisplay {
-    display: none;
 }
 
 .avatar {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    float: left;
-    margin-top: 5px;
+    position: absolute;
+    top: 5px;
+    left: 0px;
 }
 
 .offline {
     filter: grayscale(100%);
 }
 
+.channelName, .activityName {
+    position: absolute;
+    width: 140px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.channelName {
+    top: 2px;
+    left: 40px;
+    font-weight: bold;
+}
+
+.activityName {
+    position: absolute;
+    top: 18px;
+    left: 40px;
+    color: var(--activityText);
+}
+
+.viewerCount {
+    position: absolute;
+    top: 2px;
+    right: 0px;
+}
+
+.agentImage {
+    height: 12px;
+    width: auto;
+    position: absolute;
+    bottom: 6px;
+    right: 0px;
+}
+
 .loader {
-    margin-left: 90px;
-    margin-bottom: 10px;
-    border: 6px solid #f3f3f3; /* Light grey */
+    position: absolute;
+    top: 6px;
+    left: 135px;
+    border: 6px solid #f0f0f0; /* Light grey */
     border-top: 6px solid #3498db; /* Blue */
     border-radius: 50%;
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
     animation: spin 1s linear infinite;
 }
 

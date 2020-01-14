@@ -22,7 +22,8 @@ mkdir $outFolder
 for folder in ${folders[*]}
 do
     cp -aR $srcFolder $outFolder/$folder
-    cp -aR ../icons $outFolder/$folder/
+    cp -aR ../images $outFolder/$folder/
+    cp -aR ../fonts $outFolder/$folder/
 done
 
 for script in ${scripts[*]}

@@ -1,10 +1,6 @@
 'use strict';
 
-module.exports = {
-    
-    LOG: function (...args)
-    {
-        console.log('StreamBlend:', ...args);
-    }
-    
+module.exports = function (...args)
+{
+    DEBUG(console.log('StreamBlend:', ...args));
 };

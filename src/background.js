@@ -1,76 +1,79 @@
 'use strict';
 
-const {LOG} = require('./log');
+const LOG = require('./log');
+const Misc = require('./misc');
 const Constants = require('./constants');
 const Agents = require('./agents');
 let agentManager = new Agents.AgentManager();
-let contentTabId = 0;
-let optionsTabId = 0;
+let tabIds = {};
 
-function checkChromeError()
+async function setErrorBadge()
 {
-    if (chrome.runtime.lastError)
-        LOG('chrome error:', chrome.runtime.lastError.message);
-}
-
-function updateError()
-{
-    let error = agentManager.getError();
-    if (error.length > 0)
+    for (let a of agentManager.agents)
     {
-        chrome.browserAction.setBadgeBackgroundColor({ color: [200, 0, 0, 255] });
-        chrome.browserAction.setBadgeText({text: '!'});
+        if (await a.getError())
+        {
+            chrome.browserAction.setBadgeBackgroundColor({ color: [200, 0, 0, 255] });
+            chrome.browserAction.setBadgeText({text: '!'});
+            return;
+        }
     }
-    else
-        chrome.browserAction.setBadgeText({text: ''});
-    chrome.runtime.sendMessage({type: Constants.ErrorTextMsg, message: error}, (response)=>{ checkChromeError(); });
+    chrome.browserAction.setBadgeText({text: ''});
 }
 
-function refreshAgentFollows(a)
-{
-    a.refreshFollows(()=>
-    {
-        chrome.tabs.sendMessage(contentTabId, {type: a.followsRefreshedMsg()}, (response)=>{ checkChromeError(); });
-        chrome.runtime.sendMessage({type: a.followsRefreshedMsg()}, (response)=>{ checkChromeError(); });
-        updateError();
-    });
-}
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 {
     LOG("background received message:", request.type);
     switch (request.type)
     {
     case Constants.ContentTabIdMsg:
-        contentTabId = sender.tab.id;
+        tabIds.content = sender.tab.id;
         break;
     case Constants.OptionsTabIdMsg:
-        optionsTabId = sender.tab.id;
+        tabIds.options = sender.tab.id;
         break;
     default:
         for (let a of agentManager.agents)
         {
-            if (request.type === a.linkMsg())
+            switch (request.type)
             {
-                a.authorize((result)=>
-                {
-                    if (result)
-                    {
-                        chrome.tabs.sendMessage(optionsTabId, {type: a.readyMsg()}, (response)=>{ checkChromeError(); });
-                        refreshAgentFollows(a);
-                    }
-                    updateError();
-                });
+            case a.msgRefreshFollows:
+                await a.refreshFollows();
+                a.sendMsgFollowsRefreshed(tabIds);
+                break;
+            default:
+                break;
             }
-            else if (request.type === a.removeMsg())
-            {
-                a.error = '';
-                updateError();
-            }
-            else if (request.type === a.refreshFollowsMsg())
-                refreshAgentFollows(a);
         }
         break;
     }
     sendResponse({});
 });
+
+chrome.storage.onChanged.addListener(async (changes, areaName) =>
+{
+    for (let key in changes)
+    {
+        for (let a of agentManager.agents)
+        {
+            switch (key)
+            {
+            case a.varError:
+                a.sendMsgError(tabIds);
+                await setErrorBadge();
+                break;
+            default:
+                break;
+            }
+        }
+    }
+});
+
+let oauthIFrameElement = document.createElement('iframe');
+oauthIFrameElement.id = Constants.OAuthIFrameId;
+document.body.appendChild(oauthIFrameElement);
+setErrorBadge();
+for (let a of agentManager.agents)
+    a.setRefreshingFollows(false);
+
+

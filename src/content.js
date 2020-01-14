@@ -1,6 +1,6 @@
 'use strict';
 
-const {LOG} = require('./log');
+const LOG = require('./log');
 const Constants = require('./constants');
 const Misc = require('./misc');
 const Agents = require('./agents');
@@ -8,7 +8,6 @@ let agentManager = new Agents.AgentManager();
 
 let currentElements = [];
 let removedElements = [];
-let refreshIntervals = {};
 
 function updateFollowElements()
 {
@@ -32,7 +31,7 @@ function updateFollowElements()
     else if (sideNavType.indexOf('collapse') !== -1)
     {
         sideNavExpanded = false;
-        if (twitch.follows.length <= 0)
+        if (!twitch.follows || !twitch.follows.length)
             return LOG('side nav collapsed but twitch not linked');
     }
     else
@@ -80,7 +79,7 @@ function updateFollowElements()
     
     for (let a of agentManager.agents)
     {
-        if (a === twitch)
+        if (a === twitch || !a.follows)
             continue;
         for (let f of a.follows)
         {
@@ -110,13 +109,13 @@ function updateFollowElements()
                     {
                         index = twitchFollowViewers.length;
                         twitchFollowViewers.splice(index, 0, f.viewerCount);
-                        Misc.insertChildAtIndex(element, parentNodeReference, index);
+                        Misc.insertChildNodeAtIndex(element, parentNodeReference, index);
                     }
                 }
                 else
                 {
                     twitchFollowViewers.splice(index, 0, f.viewerCount);
-                    Misc.insertChildAtIndex(element, parentNodeReference, index);
+                    Misc.insertChildNodeAtIndex(element, parentNodeReference, index);
                 }
             }
             else
@@ -128,14 +127,7 @@ function updateFollowElements()
     }
 }
 
-function setAgentInterval(agent)
-{
-    if (agent.name in refreshIntervals)
-        clearInterval(refreshIntervals[agent.name]);
-    refreshIntervals[agent.name] = setInterval(()=>{ chrome.runtime.sendMessage({type: agent.refreshFollowsMsg()}); }, Constants.RefreshFollowTime + 1000);
-}
-
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
 {
     LOG("content received message:", request.type);
     switch (request.type)
@@ -143,10 +135,14 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
     default:
         for (let a of agentManager.agents)
         {
-            if (request.type === a.followsRefreshedMsg())
+            switch (request.type)
             {
-                setAgentInterval(a);
-                a.loadFollows((result)=>{ updateFollowElements(); });
+            case a.msgFollowsRefreshed:
+                a.follows = await a.getFollows();
+                updateFollowElements();
+                break;
+            default:
+                break;
             }
         }
         break;
@@ -154,12 +150,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
     sendResponse({});
 });
 
-chrome.runtime.sendMessage({type: Constants.ContentTabIdMsg}, (response)=>{});
-for (let a of agentManager.agents)
+chrome.runtime.sendMessage({type: Constants.ContentTabIdMsg});
+
+function refresh()
 {
-    setAgentInterval(a);
-    chrome.runtime.sendMessage({type: a.refreshFollowsMsg()});
+    for (let a of agentManager.agents)
+        a.sendMsgRefreshFollows();
 }
+refresh();
+setInterval(refresh, 30 * 1000);
 
 let mutationObserver = new MutationObserver((mutations) =>
 {
@@ -193,3 +192,4 @@ let observerInterval = setInterval(()=>
     LOG('observing side nav');
     clearInterval(observerInterval);
 }, 1000);
+

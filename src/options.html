@@ -3,65 +3,33 @@
 <html>
     <head>
         <meta charset="utf-8">
-            <link rel="stylesheet" href="options.css"/>
-            </head>
+        <link rel="stylesheet" href="options.css"/>
+    </head>
     
-    <body class="lightTheme">
-        <div class="title"><h1>StreamBlend</h1></div>
-        <div class="row">
-            <img src="icons/128.png" alt="">
-                </div>
-        <div class="row">
-            <span class="infoText">Link your desired websites.</span>
-        </div>
-        <div class="row">
-            <div id="linkMixer" class="button noDisplay">Link Mixer</div>
-            <div id="removeMixer" class="button noDisplay">Remove Mixer</div>
-        </div>
-        <div class="row">
-            <div id="linkTwitch" class="button noDisplay">Link Twitch</div>
-            <div id="removeTwitch" class="button noDisplay">Remove Twitch</div>
-        </div>
-        <div class="row">
-            <div id="linkYouTube" class="button noDisplay">Link YouTube</div>
-            <div id="removeYouTube" class="button noDisplay">Remove YouTube</div>
-        </div>
-        <div class="separation"></div>
-        <div class="row">
-            <span class="infoText">Your follows are automatically refreshed every 5 minutes while your on Twitch.tv or when you click the toolbar icon.</span>
-        </div>
-        <div class="row">
-            <div id="refreshFollowsId" class="button">Manually Refresh Follows</div>
-        </div>
-        <div class="separation"></div>
-        <div class="row">
-            <div id="darkModeId" class="button">Dark Mode</div>
-        </div>
-        <div class="separation"></div>
-        <div class="row">
-            <span class="infoText">StreamBlend is free and open source! You can help by contributing a pull request, filling out a bug report, sending an email, or by donating to show your support and allow us to put more time into it.</span>
-        </div>
-        <div class="row">
-            <div id="githubId" class="button cool">Github</div>
-        </div>
-        <div class="row">
-            <div id="donateId" class="button">Donate</div>
-        </div>
+    <body class="lightScheme">
+        <div class="title">StreamBlend</div>
+        <img class="titleImage" src="images/icon.svg" alt="">
+        <div id="errorId"></div>
+        <span class="infoText">Connect one or more accounts.</span>
+        <div id="connectId"></div>
+        <div style="margin-top: 40px;"></div>
+        <span class="infoText">Your follows are automatically refreshed every 5 minutes while your on Twitch.tv or when you click the toolbar icon. Alternatively, you can click the button below to instantly refresh.</span>
+        <div class="row"><div id="refreshFollowsId" class="button">Manually Refresh Follows</div></div>
+        <div style="margin-top: 40px;"></div>
+        <span class="infoText">Change the color scheme.</span>
+        <div class="row"><div id="colorId" class="button"></div></div>
+        <div style="margin-top: 40px;"></div>
+        <span class="infoText">StreamBlend is free and open source! You can help by contributing a pull request, filling out a bug report, sending an email, or by donating to show your support and allow us to put more time into it.</span>
+        <div class="row"><a class="button" href="https://github.com/DiegoAce/StreamBlend">Github</a></div>
+        <div class="row"><a class="button" href="https://www.paypal.me/DiegoAce">Donate</a></div>
         <div style="margin-top: 5px;"></div>
-        <div class="row">
-            <div class="infoText">streamblend@gmail.com</div>
-        </div>
-        <div style="margin-top: 100px;"></div>
-        <div class="row">
-            <span class="infoText">Notes</span>
-        </div>
-        <div class="row">
-            <ul type="circle" class="infoText leftText">
-                <li>When using StreamBlend, no data is ever sent to us. Only between you and the websites.</li>
-                <li>When on Twitch.tv and the side bar is collapsed, other websites' follows will only be merged into the side bar if Twitch is linked.</li>
-                <li>If you have a lot of YouTube subscribers, having YouTube linked may be slow and use a lot of data.</li>
-            </ul>
-        </div>
+        <div class="infoText">streamblend@gmail.com</div>
+        <div style="margin-top: 80px;"></div>
+        <span class="infoText">Notes</span>
+        <ul type="circle" class="leftText">
+            <li>When using StreamBlend, no data is ever sent to us. Only between you and the websites.</li>
+            <li>When on Twitch.tv and the side bar is collapsed, other websites' follows will only be merged correctly into the side bar if Twitch is connected to the same account you are logged into on Twitch.tv.</li>
+        </ul>
         <script src="options.js"></script>
     </body>
     

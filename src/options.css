@@ -1,76 +1,199 @@
+:root {
+    --inputMinWidth: 400px;
+    --connectWidth: 120px;
+}
 
-.lightTheme {
+.lightScheme {
     --back: #FFFFFF;
     --text: #000000;
     --hover: #E8E8E8;
-    --border: #EEEEEE;
+    --titleBorder: #EEEEEE;
+    --connectBackColor: #8fceff;
+    --disconnectBackColor: #ffb9b9;
+    --connectHoverColor: #6491b3;
+    --disconnectHoverColor: #b38282;
 }
 
-.darkTheme {
+.darkScheme {
     --back: #000000;
     --text: #DDDDDD;
-    --hover: #222222;
-    --border: #222222;
+    --hover: #333333;
+    --titleBorder: #222222;
+    --connectBackColor: #4882c2;
+    --disconnectBackColor: #c24848;
+    --connectHoverColor: #253f6f;
+    --disconnectHoverColor: #6f2525;
+}
+
+@font-face {
+  font-family: texgyreheros;
+  src: url(fonts/texgyreheros-regular.woff);
+}
+
+@font-face {
+  font-family: texgyreheros;
+  src: url(fonts/texgyreheros-bold.woff);
+  font-weight: bold;
+}
+
+a {
+    all: unset;
+}
+
+img {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 body {
+    display: block;
+    width: 700px;
+    margin-left: auto;
+    margin-right: auto;
     overflow: auto;
     background: var(--back);
     color: var(--text);
+    font-family: texgyreheros;
+    font-size: 14px;
 }
 
 .title {
-    margin: 1em auto;
-    border-bottom: 1px solid var(--border);
     text-align: center;
+    font-size: 32px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--titleBorder);
+}
+
+.titleImage {
+    display: block;
+    width: 100px;
+    height: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
 }
 
 .row {
     display: flex;
     justify-content: center;
     align-items: center;
+    text-align: center;
 }
 
 .infoText {
+    display: block;
     text-align: center;
-    max-width: 700px;
-    margin-left: 50px;
-    margin-right: 50px;
 }
 
 .leftText {
+    display: block;
     text-align: left;
 }
 
-.separation {
-    margin-top: 40px;
+.accountImage {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    margin: 10px 20px 10px 0px;
+}
+
+.joinedInput, .joinedInfo, .joinedConnect, .joinedDisconnect, .singleButton {
+    height: 44px;
+    line-height: 40px;
+    font-size: 14px;
+    box-sizing: border-box;
+    padding: 0px 20px;
+    border: 2px solid var(--text);
+    border-radius: 10px;
+    background-color: var(--back);
+    color: var(--text);
+}
+
+.joinedInput, .joinedInfo {
+    min-width: var(--inputMinWidth);
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-right: none;
+}
+
+.joinedConnect, .joinedDisconnect {
+    width: var(--connectWidth);
+    background-color: var(--connectBackColor);
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    cursor: pointer;
+    color: #000000;
+}
+
+.joinedDisconnect {
+    background-color: var(--disconnectBackColor);
+}
+
+.singleButton {
+    cursor: pointer;
+    width: calc(var(--inputMinWidth) + var(--connectWidth));
+}
+
+.joinedConnect:hover {
+    background-color: var(--connectHoverColor);
+}
+
+.joinedDisconnect:hover {
+    background-color: var(--disconnectHoverColor);
+}
+
+.errorText, .errorButton {
+    color: #BB0000;
+    box-sizing: border-box;
+    padding: 12px 20px;
+    margin-bottom: 8px;
+    border: 1px solid #BB0000;
+    border-radius: 10px;
+}
+
+.errorText {
+    border-right: none;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.errorButton {
+    cursor: pointer;
+    border-left: none;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
 }
 
 .button {
     display: inline-block;
-    margin: 5px;
-    padding-left: 10px;
-    padding-right: 10px;
     min-width: 80px;
     height: 40px;
     line-height: 40px;
-    text-align: center;
+    padding: 0px 10px;
+    margin: 5px;
     border: 2px solid var(--text);
     border-radius: 10px;
     cursor: pointer;
     background: var(--back);
 }
 
-.button:hover {
+.button:hover, .singleButton:hover, .errorButton:hover {
     background-color: var(--hover);
 }
 
-.noDisplay {
-    display: none;
+.loader {
+    --size: 20px;
+    --border: 6px;
+    margin: 0px calc((var(--inputMinWidth) + var(--connectWidth) - var(--size) - var(--border)*2) / 2);
+    border: var(--border) solid #f3f3f3;
+    border-top-color: #3498db;
+    border-radius: 50%;
+    width: var(--size);
+    height: var(--size);
+    animation: spin 1s linear infinite;
 }
 
-img {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 10px;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

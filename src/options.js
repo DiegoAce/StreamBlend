@@ -1,71 +1,124 @@
 'use strict';
 
-const {LOG} = require('./log');
+const LOG = require('./log');
+const Misc = require('./misc');
 const Constants = require('./constants');
 const Agents = require('./agents');
 let agentManager = new Agents.AgentManager();
+let errorElement = document.getElementById('errorId');
+let connectElement = document.getElementById('connectId');
+let colorElement = document.getElementById('colorId');
 
-document.getElementById('refreshFollowsId').onclick = (element)=>
-{
-    for (let a of agentManager.agents)
-        a.clearFollows(()=>{ chrome.runtime.sendMessage({type: a.refreshFollowsMsg()}, (response)=>{}); });
-};
-document.getElementById('githubId').onclick = (element)=>{ chrome.tabs.create({url: 'https://github.com/DiegoAce/StreamBlend'}); };
-document.getElementById('donateId').onclick = (element)=>{ chrome.tabs.create({url: 'https://www.paypal.me/DiegoAce'}); };
-document.getElementById('darkModeId').onclick = (element)=>{ setColorTheme(true); };
-
-function setColorTheme(toggle)
+function setColorScheme(toggle)
 {
     chrome.storage.local.get([Constants.DarkModeName], (items) =>
     {
-        let dark = Constants.DarkModeName in items && items[Constants.DarkModeName] != null ? items[Constants.DarkModeName] : false;
+        let dark = items[Constants.DarkModeName] ? items[Constants.DarkModeName] : false;
         if (toggle)
             dark = !dark;
-        document.body.className = dark ? 'darkTheme' : 'lightTheme';
-        chrome.storage.local.set({[Constants.DarkModeName]: dark}, ()=>{});
+        document.body.className = dark ? 'darkScheme' : 'lightScheme';
+        colorElement.textContent = dark ? 'Light' : 'Dark';
+        chrome.storage.local.set({[Constants.DarkModeName]: dark});
     });
 }
-setColorTheme(false);
 
-for (let a of agentManager.agents)
+async function setErrors()
 {
-    a.linkButton = document.getElementById('link' + a.name);
-    a.linkButton.onclick = (element)=>
-    {
-        chrome.runtime.sendMessage({type: a.linkMsg()}, (response)=>{});
-        chrome.tabs.create({url: a.getCodeUrl()});
-    };
-    a.removeButton = document.getElementById('remove' + a.name);
-    a.removeButton.onclick = (element)=>
-    {
-        chrome.runtime.sendMessage({type: a.removeMsg()}, (response)=>{});
-        a.resetStoredAuth(()=>{ setButtons(); });
-    };
-}
-
-function setButtons()
-{
+    let nodes = [];
     for (let a of agentManager.agents)
     {
-        a.loadAuth((result) =>
+        let error = await a.getError();
+        if (error)
         {
-            a.linkButton.style.display = result ? 'none' : 'inline-block';
-            a.removeButton.style.display = result ? 'inline-block' : 'none';
-        });
+            a.errorElement.innerHTML = '<div class="row"> \
+                                            <div class="errorText">' + error + '</div> \
+                                            <div class="errorButton">x</div> \
+                                        </div>';
+            a.errorElement.getElementsByClassName('errorButton')[0].onclick = (element)=>{ a.setError(''); };
+            nodes.push(a.errorElement);
+        }
+    }
+    if (nodes.length)
+        nodes[nodes.length - 1].style['margin-bottom'] = '20px';
+    while (errorElement.firstChild)
+        errorElement.firstChild.remove();
+    for (let n of nodes)
+        errorElement.appendChild(n);
+}
+
+async function setAgentConnect(a)
+{
+    a.connectElement.getElementsByClassName('loader')[0].style.display = 'none';
+    let userName = await a.getUserName();
+    switch (a.connectType)
+    {
+    case Agents.ConnectType.UserName:
+        if (userName)
+        {
+            a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'inline';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].innerHTML = 'Connected as <b>' + userName + '</b>';
+            a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'inline';
+        }
+        else
+        {
+            a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'inline';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'inline';
+            a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'none';
+        }
+        break;
+    case Agents.ConnectType.OAuth:
+        if (userName)
+        {
+            a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'inline';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].innerHTML = 'Connected as <b>' + userName + '</b>';
+            a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'inline';
+        }
+        else
+        {
+            a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'inline';
+            a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'none';
+        }
+        break;
+    default:
+        break;
     }
 }
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 {
     LOG("options received message:", request.type);
     switch (request.type)
     {
+    case Constants.OAuthMsg:
+        if (sender.tab)
+        {
+            for (let a of agentManager.agents)
+            {
+                if (sender.tab.id === a.oauthTabId)
+                {
+                    await a.authorize(sender.url);
+                    await setAgentConnect(a);
+                    a.sendMsgRefreshFollows();
+                }
+            }
+            chrome.tabs.remove(sender.tab.id);
+        }
+        break;
     default:
         for (let a of agentManager.agents)
         {
-            if (request.type === a.readyMsg())
+            switch (request.type)
             {
-                setButtons();
+            case a.msgError:
+                await setErrors();
+                break;
+            default:
+                break;
             }
         }
         break;
@@ -73,5 +126,80 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
     sendResponse({});
 });
 
-chrome.runtime.sendMessage({type: Constants.OptionsTabIdMsg}, (response)=>{});
-setButtons();
+colorElement.onclick = (element)=>{ setColorScheme(true); };
+document.getElementById('refreshFollowsId').onclick = async (element)=>
+{
+    for (let a of agentManager.agents)
+    {
+        await a.setTimeFollowsRefreshed(0);
+        a.sendMsgRefreshFollows();
+    }
+};
+
+for (let a of agentManager.agents)
+{
+    a.errorElement = document.createElement('div');
+    a.connectElement = document.createElement('div');
+    connectElement.appendChild(a.connectElement);
+    switch (a.connectType)
+    {
+    case Agents.ConnectType.UserName:
+        a.connectElement.innerHTML =    '<div class="row"> \
+                                            <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
+                                            <input class="joinedInput" placeholder="Enter your '+ a.name + ' ' + a.userNameDescription + '"> \
+                                            <div class="joinedInfo"></div> \
+                                            <div class="joinedConnect">Connect</div> \
+                                            <div class="joinedDisconnect">Disconnect</div> \
+                                            <div class="loader"></div> \
+                                        </div>';
+        a.connectElement.getElementsByClassName('joinedConnect')[0].onclick = async (element)=>
+        {
+            if (!a.connectElement.getElementsByClassName('joinedInput')[0].value)
+                return;
+            a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
+            await a.authorize(a.connectElement.getElementsByClassName('joinedInput')[0].value);
+            await setAgentConnect(a);
+            a.sendMsgRefreshFollows();
+        };
+        a.connectElement.getElementsByClassName('joinedInput')[0].addEventListener("keyup", (event)=>
+        {
+            if (event.keyCode === 13)
+            {
+                event.preventDefault();
+                a.connectElement.getElementsByClassName('joinedConnect')[0].click();
+            }
+        });
+        break;
+    case Agents.ConnectType.OAuth:
+        a.connectElement.innerHTML =    '<div class="row"> \
+                                            <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
+                                            <div class="singleButton">Connect ' + a.name + '</div> \
+                                            <div class="joinedInfo"></div> \
+                                            <div class="joinedDisconnect">Disconnect</div> \
+                                            <div class="loader"></div> \
+                                        </div>';
+        a.connectElement.getElementsByClassName('singleButton')[0].onclick = async (element)=>
+        {
+            a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';
+            a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
+            chrome.tabs.create({url: await a.getAuthUrl()}, (tab)=>{ a.oauthTabId = tab.id; });
+        };
+        break;
+    default:
+        break;
+    }
+    a.connectElement.getElementsByClassName('joinedDisconnect')[0].onclick = async (element)=>
+    {
+        await a.setUserName('');
+        await a.setFollows([]);
+        await a.setTimeFollowsRefreshed(0);
+        await setAgentConnect(a);
+    };
+    setAgentConnect(a);
+}
+
+setColorScheme(false);
+setErrors();
+chrome.runtime.sendMessage({type: Constants.OptionsTabIdMsg});
