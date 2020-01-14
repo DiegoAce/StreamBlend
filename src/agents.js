@@ -260,7 +260,7 @@ class YouTube extends Agent
     }
     async getAuthUrl()
     {
-        let params = {client_id: '692437206912-o65sokucfei9f74gjbu7ppf6sprci07k.apps.googleusercontent.com', redirect_uri: 'https://streamblend.github.io/oauth', response_type: 'token', scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly', prompt: 'select_account'};
+        let params = {client_id: '692437206912-o65sokucfei9f74gjbu7ppf6sprci07k.apps.googleusercontent.com', redirect_uri: 'https://sites.google.com/site/streamblend/oauth', response_type: 'token', scope: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/youtube.readonly', prompt: 'select_account'};
         let userName = await this.getUserName();
         if (userName)
             params = {...params, ...{prompt: 'none', login_hint: userName}}

@@ -2,7 +2,7 @@
     
     "manifest_version": 2,
     "name": "StreamBlend",
-    "version": "1.7",
+    "version": "1.8",
     "description": "Blends your follows from multiple sites into one list.",
     "icons": {
         "16": "images/16.png",
@@ -32,7 +32,7 @@
             "js": ["content.js"]
         },
         {
-            "matches": ["https://streamblend.github.io/oauth"],
+            "matches": ["https://sites.google.com/site/streamblend/oauth"],
             "js": ["oauth.js"],
             "all_frames": true
         }
