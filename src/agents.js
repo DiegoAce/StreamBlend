@@ -209,7 +209,18 @@ class Mixer extends Agent
             if (!response)
                 return await this.setFollowError();
             for (let r of response)
-                follows.push(new Follow({userName: r.user.username, activityName: r.type.name, avatarUrl: r.user.avatarUrl, online: r.online, viewerCount: r.viewersCurrent, link: 'https://mixer.com/' + r.user.username}));
+            {
+                if (r.user && r.user.username && r.user.avatarUrl)
+                {
+                    follows.push(new Follow({userName: r.user.username, avatarUrl: r.user.avatarUrl, link: 'https://mixer.com/' + r.user.username}));
+                    if (r.type && r.type.name)
+                        follows[follows.length - 1].activityName = r.type.name;
+                    if (r.online)
+                        follows[follows.length - 1].online = r.online;
+                    if (r.viewersCurrent)
+                        follows[follows.length - 1].viewerCount = r.viewersCurrent;
+                }
+            }
             if (!Misc.objectEmpty(response))
                 return await getFollowPage(page + 1);
             return follows;
