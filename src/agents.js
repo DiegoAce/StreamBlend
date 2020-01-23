@@ -101,6 +101,8 @@ class Agent
         }
         if (follows)
         {
+            if (await new Promise((resolve)=>{ chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ resolve(obj[Constants.HideOfflineName]); }); }))
+                follows = follows.filter((f)=>{ return f.online; });
             await this.setFollows(follows);
             await this.setTimeFollowsRefreshed(Date.now());
         }

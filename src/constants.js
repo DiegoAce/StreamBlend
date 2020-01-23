@@ -6,6 +6,7 @@ module.exports = {
     OptionsTabIdMsg: 'OptionsTabId',
     OAuthMsg: 'OAuth',
     OAuthIFrameId: 'OAuthIFrameId',
-    DarkModeName: 'DarkMode'
+    DarkModeName: 'DarkMode',
+    HideOfflineName: 'HideOffline'
     
 };

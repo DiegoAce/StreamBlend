@@ -7,12 +7,13 @@ let {agents, ConnectType} = require('./agents');
 let errorElement = document.getElementById('errorId');
 let connectElement = document.getElementById('connectId');
 let colorElement = document.getElementById('colorId');
+let hideOfflineElement = document.getElementById('hideOffline');
 
 function setColorScheme(toggle)
 {
-    chrome.storage.local.get([Constants.DarkModeName], (items) =>
+    chrome.storage.local.get([Constants.DarkModeName], (obj) =>
     {
-        let dark = items[Constants.DarkModeName] ? items[Constants.DarkModeName] : false;
+        let dark = obj[Constants.DarkModeName] ? true : false;
         if (toggle)
             dark = !dark;
         document.body.className = dark ? 'darkScheme' : 'lightScheme';
@@ -88,6 +89,15 @@ async function setAgentConnect(a)
     }
 }
 
+async function refreshFollows()
+{
+    for (let a of agents)
+    {
+        await a.setTimeFollowsRefreshed(0);
+        a.sendMsgRefreshFollows();
+    }
+}
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 {
     LOG("options received message:", request.type);
@@ -126,14 +136,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 });
 
 colorElement.onclick = (element)=>{ setColorScheme(true); };
-document.getElementById('refreshFollowsId').onclick = async (element)=>
-{
-    for (let a of agents)
-    {
-        await a.setTimeFollowsRefreshed(0);
-        a.sendMsgRefreshFollows();
-    }
-};
+chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ hideOfflineElement.checked = obj[Constants.HideOfflineName] ? true : false; });
+hideOfflineElement.onclick = (element)=>{ chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ chrome.storage.local.set({[Constants.HideOfflineName]: obj[Constants.HideOfflineName] ? false : true}, ()=>{ refreshFollows(); }); }); };
+document.getElementById('refreshFollowsId').onclick = refreshFollows;
 
 for (let a of agents)
 {

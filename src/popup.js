@@ -12,7 +12,7 @@ let emptyTextElement = document.getElementById('emptyTextId');
 let gearButton = document.getElementById('gearId');
 gearButton.onclick = (event)=>{ chrome.tabs.create({url: 'options.html'}); };
 
-chrome.storage.local.get([Constants.DarkModeName], (items)=>{ document.body.className = items[Constants.DarkModeName] ? 'darkScheme' : 'lightScheme'; });
+chrome.storage.local.get([Constants.DarkModeName], (obj)=>{ document.body.className = obj[Constants.DarkModeName] ? 'darkScheme' : 'lightScheme'; });
 
 async function setErrorElement()
 {
