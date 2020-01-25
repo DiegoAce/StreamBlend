@@ -12,13 +12,15 @@
         "128": "images/128.png"
     },
     "permissions": [
+        "identity",
         "storage",
         "*://*.mixer.com/*",
         "*://*.twitch.tv/*",
         "*://*.google.com/*",
         "*://*.googleapis.com/*",
         "*://*.youtube.com/*",
-        "*://*.dlive.tv/*"
+        "*://*.dlive.tv/*",
+        "*://*.smashcast.tv/*"
     ],
     "options_ui": {
         "page": "options.html"
@@ -29,7 +31,12 @@
     "content_scripts": [
         {
             "matches": ["*://*.twitch.tv/*"],
-            "js": ["content.js"]
+            "js": ["contentTwitch.js"]
+        },
+        {
+            "matches": ["*://*.mixer.com/*"],
+            "css": ["contentMixer.css"],
+            "js": ["contentMixer.js"]
         },
         {
             "matches": ["https://sites.google.com/site/streamblend/oauth"],
@@ -48,6 +55,10 @@
         "default_title": "StreamBlend",
         "default_popup": "popup.html"
     },
+    "web_accessible_resources": [
+        "images/*",
+        "fonts/*"
+    ],
     
     
     "FireFoxOnlyData": {

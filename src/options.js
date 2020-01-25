@@ -6,20 +6,15 @@ const Constants = require('./constants');
 let {agents, ConnectType} = require('./agents');
 let errorElement = document.getElementById('errorId');
 let connectElement = document.getElementById('connectId');
-let colorElement = document.getElementById('colorId');
-let hideOfflineElement = document.getElementById('hideOffline');
+let darkModeElement = document.getElementById('darkModeId');
+let hideOfflineElement = document.getElementById('hideOfflineId');
+let hideMixerSideBarElement = document.getElementById('hideMixerSideBarId');
 
-function setColorScheme(toggle)
+async function setColorScheme()
 {
-    chrome.storage.local.get([Constants.DarkModeName], (obj) =>
-    {
-        let dark = obj[Constants.DarkModeName] ? true : false;
-        if (toggle)
-            dark = !dark;
-        document.body.className = dark ? 'darkScheme' : 'lightScheme';
-        colorElement.textContent = dark ? 'Light' : 'Dark';
-        chrome.storage.local.set({[Constants.DarkModeName]: dark});
-    });
+    let dark = Boolean(await Misc.getStorage(Constants.DarkModeName));
+    document.body.className = dark ? 'darkScheme' : 'lightScheme';
+    darkModeElement.checked = dark;
 }
 
 async function setErrors()
@@ -98,6 +93,76 @@ async function refreshFollows()
     }
 }
 
+async function setConnects()
+{
+    while (connectElement.firstChild)
+        connectElement.firstChild.remove();
+    let dark = await Misc.getStorage(Constants.DarkModeName);
+    for (let a of agents)
+    {
+        a.errorElement = document.createElement('div');
+        a.connectElement = document.createElement('div');
+        connectElement.appendChild(a.connectElement);
+        switch (a.connectType)
+        {
+        case ConnectType.UserName:
+            a.connectElement.innerHTML =    '<div class="row"> \
+                                                <div class="accountImage"><img src="images/' + (await a.getImage(dark)) + '" alt=""></div> \
+                                                <input class="joinedInput" placeholder="Enter your '+ a.name + ' ' + a.userNameDescription + '"> \
+                                                <div class="joinedInfo"></div> \
+                                                <div class="joinedConnect">Connect</div> \
+                                                <div class="joinedDisconnect">Disconnect</div> \
+                                                <div class="loader"></div> \
+                                            </div>';
+            a.connectElement.getElementsByClassName('joinedConnect')[0].onclick = async (element)=>
+            {
+                if (!a.connectElement.getElementsByClassName('joinedInput')[0].value)
+                    return;
+                a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
+                a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'none';
+                a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
+                await a.authorize(a.connectElement.getElementsByClassName('joinedInput')[0].value);
+                await setAgentConnect(a);
+                a.sendMsgRefreshFollows();
+            };
+            a.connectElement.getElementsByClassName('joinedInput')[0].addEventListener("keyup", (event)=>
+            {
+                if (event.keyCode === 13)
+                {
+                    event.preventDefault();
+                    a.connectElement.getElementsByClassName('joinedConnect')[0].click();
+                }
+            });
+            break;
+        case ConnectType.OAuth:
+            a.connectElement.innerHTML =    '<div class="row"> \
+                                                <div class="accountImage"><img src="images/' + (await a.getImage(dark)) + '" alt=""></div> \
+                                                <div class="singleButton">Connect ' + a.name + '</div> \
+                                                <div class="joinedInfo"></div> \
+                                                <div class="joinedDisconnect">Disconnect</div> \
+                                                <div class="loader"></div> \
+                                            </div>';
+            a.connectElement.getElementsByClassName('singleButton')[0].onclick = async (element)=>
+            {
+                a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';
+                a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
+                chrome.tabs.create({url: await a.getAuthUrl()}, (tab)=>{ a.oauthTabId = tab.id; });
+            };
+            break;
+        default:
+            break;
+        }
+        a.connectElement.getElementsByClassName('joinedDisconnect')[0].onclick = async (element)=>
+        {
+            await a.setUserName('');
+            await a.setFollows([]);
+            await a.setTimeFollowsRefreshed(0);
+            await setAgentConnect(a);
+        };
+        setAgentConnect(a);
+    }
+}
+
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
 {
     LOG("options received message:", request.type);
@@ -135,75 +200,26 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
     sendResponse({});
 });
 
-colorElement.onclick = (element)=>{ setColorScheme(true); };
-chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ hideOfflineElement.checked = obj[Constants.HideOfflineName] ? true : false; });
-hideOfflineElement.onclick = (element)=>{ chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ chrome.storage.local.set({[Constants.HideOfflineName]: obj[Constants.HideOfflineName] ? false : true}, ()=>{ refreshFollows(); }); }); };
+darkModeElement.onclick = async (element)=>
+{
+    await Misc.setStorage(Constants.DarkModeName, darkModeElement.checked);
+    await setColorScheme();
+    await setConnects();
+};
+Misc.getStorage(Constants.HideOfflineName).then((hide)=>{ hideOfflineElement.checked = Boolean(hide); });
+hideOfflineElement.onclick = async (element)=>
+{
+    await Misc.setStorage(Constants.HideOfflineName, hideOfflineElement.checked);
+    refreshFollows();
+};
+Misc.getStorage(Constants.HideMixerSideBarName).then((show)=>{ hideMixerSideBarElement.checked = Boolean(show); });
+hideMixerSideBarElement.onclick = async (element)=>
+{
+    await Misc.setStorage(Constants.HideMixerSideBarName, hideMixerSideBarElement.checked);
+};
 document.getElementById('refreshFollowsId').onclick = refreshFollows;
 
-for (let a of agents)
-{
-    a.errorElement = document.createElement('div');
-    a.connectElement = document.createElement('div');
-    connectElement.appendChild(a.connectElement);
-    switch (a.connectType)
-    {
-    case ConnectType.UserName:
-        a.connectElement.innerHTML =    '<div class="row"> \
-                                            <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
-                                            <input class="joinedInput" placeholder="Enter your '+ a.name + ' ' + a.userNameDescription + '"> \
-                                            <div class="joinedInfo"></div> \
-                                            <div class="joinedConnect">Connect</div> \
-                                            <div class="joinedDisconnect">Disconnect</div> \
-                                            <div class="loader"></div> \
-                                        </div>';
-        a.connectElement.getElementsByClassName('joinedConnect')[0].onclick = async (element)=>
-        {
-            if (!a.connectElement.getElementsByClassName('joinedInput')[0].value)
-                return;
-            a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
-            a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'none';
-            a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
-            await a.authorize(a.connectElement.getElementsByClassName('joinedInput')[0].value);
-            await setAgentConnect(a);
-            a.sendMsgRefreshFollows();
-        };
-        a.connectElement.getElementsByClassName('joinedInput')[0].addEventListener("keyup", (event)=>
-        {
-            if (event.keyCode === 13)
-            {
-                event.preventDefault();
-                a.connectElement.getElementsByClassName('joinedConnect')[0].click();
-            }
-        });
-        break;
-    case ConnectType.OAuth:
-        a.connectElement.innerHTML =    '<div class="row"> \
-                                            <div class="accountImage"><img src="images/' + a.name.toLowerCase() + '.svg" alt=""></div> \
-                                            <div class="singleButton">Connect ' + a.name + '</div> \
-                                            <div class="joinedInfo"></div> \
-                                            <div class="joinedDisconnect">Disconnect</div> \
-                                            <div class="loader"></div> \
-                                        </div>';
-        a.connectElement.getElementsByClassName('singleButton')[0].onclick = async (element)=>
-        {
-            a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';
-            a.connectElement.getElementsByClassName('loader')[0].style.display = 'inline';
-            chrome.tabs.create({url: await a.getAuthUrl()}, (tab)=>{ a.oauthTabId = tab.id; });
-        };
-        break;
-    default:
-        break;
-    }
-    a.connectElement.getElementsByClassName('joinedDisconnect')[0].onclick = async (element)=>
-    {
-        await a.setUserName('');
-        await a.setFollows([]);
-        await a.setTimeFollowsRefreshed(0);
-        await setAgentConnect(a);
-    };
-    setAgentConnect(a);
-}
-
-setColorScheme(false);
+setConnects();
+setColorScheme();
 setErrors();
 chrome.runtime.sendMessage({type: Constants.OptionsTabIdMsg});

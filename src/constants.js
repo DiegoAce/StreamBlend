@@ -2,11 +2,13 @@
 
 module.exports = {
     
-    ContentTabIdMsg: 'ContentTabId',
+    TwitchTabIdMsg: 'TwitchTabId',
+    MixerTabIdMsg: 'MixerTabId',
     OptionsTabIdMsg: 'OptionsTabId',
     OAuthMsg: 'OAuth',
     OAuthIFrameId: 'OAuthIFrameId',
     DarkModeName: 'DarkMode',
-    HideOfflineName: 'HideOffline'
+    HideOfflineName: 'HideOffline',
+    HideMixerSideBarName: 'HideMixerSideBar'
     
 };

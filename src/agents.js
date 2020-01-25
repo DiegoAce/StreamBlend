@@ -34,8 +34,8 @@ class Agent
         for (let varName of ['Error', 'UserName', 'UserId', 'AccessToken', 'Follows', 'TimeFollowsRefreshed', 'RefreshingFollows'])
         {
             this['var' + varName] = this.name + varName;
-            this['set' + varName] = (x)=>{ return new Promise((resolve)=>{ chrome.storage.local.set({[this.name + varName]: x}, ()=>{ LOG('set' + this.name + varName, x); resolve(); }); }); }
-            this['get' + varName] = ()=>{ return new Promise((resolve)=>{ chrome.storage.local.get([this.name + varName], (obj)=>{ LOG('get' + this.name + varName, Object.values(obj)[0]); resolve(Object.values(obj)[0]); }); }); }
+            this['set' + varName] = (x)=>{ return Misc.setStorage(this.name + varName, x); }
+            this['get' + varName] = ()=>{ return Misc.getStorage(this.name + varName); }
         }
         for (let varName of ['Error', 'RefreshFollows', 'FollowsRefreshed'])
         {
@@ -52,6 +52,7 @@ class Agent
     async setOAuthError() { await this.setError(this.name + ' authentication error.'); }
     async setUserNameError() { await this.setError(this.name + ' ' + this.userNameDescription + ' not found.'); }
     async setFollowError() { await this.setError(this.name + ' could not get follows. Try again later or try reconnecting the account.'); }
+    async getImage(dark) { return this.name.toLowerCase() + '.svg'; }
     async authorize(data)
     {
         await this.setError('');
@@ -96,12 +97,13 @@ class Agent
         let follows = await this.getNewFollows();
         if (!follows && this.connectType === ConnectType.OAuth)
         {
+            await this.setError('');
             await this.hiddenAuthorize();
             follows = await this.getNewFollows();
         }
         if (follows)
         {
-            if (await new Promise((resolve)=>{ chrome.storage.local.get([Constants.HideOfflineName], (obj)=>{ resolve(obj[Constants.HideOfflineName]); }); }))
+            if (await Misc.getStorage(Constants.HideOfflineName))
                 follows = follows.filter((f)=>{ return f.online; });
             await this.setFollows(follows);
             await this.setTimeFollowsRefreshed(Date.now());
@@ -193,6 +195,10 @@ class Mixer extends Agent
         super('Mixer');
         this.userNameDescription = 'username';
     }
+    async getImage(dark)
+    {
+        return 'mixer' + (dark ? 'Dark' : 'Light') + '.svg';
+    }
     async setAuth(userName)
     {
         let response = await Misc.fetchGet('https://mixer.com/api/v1/channels/' + userName, {}, {});
@@ -259,6 +265,59 @@ class DLive extends Agent
             if (response.data.userByDisplayName.following.pageInfo.hasNextPage)
                 return await getFollowPage(response.data.userByDisplayName.following.pageInfo.endCursor);
             return follows;
+        };
+        return await getFollowPage(0);
+    }
+}
+
+class Smashcast extends Agent
+{
+    constructor()
+    {
+        super('Smashcast');
+        this.userNameDescription = 'username';
+    }
+    async setAuth(userName)
+    {
+        let response = await Misc.fetchGet('https://api.smashcast.tv/user/' + userName, {}, {});
+        if (!response || !response.user_name)
+            return await this.setUserNameError();
+        await this.setUserName(response.user_name);
+    }
+    async getNewFollows()
+    {
+        let username = await this.getUserName();
+        let follows = [];
+        const MaxCount = 100;
+        let getFollowPage = async (index)=>
+        {
+            let response = await Misc.fetchGet('https://api.smashcast.tv/following/user', {user_name: username, offset: index, limit: MaxCount}, {});
+            if (!response || !response.following || (!response.max_results && Number(response.max_results) !== 0))
+                return await this.setFollowError();
+            if (!Number(response.max_results))
+                return follows;
+            
+            let mediaUrl = 'https://api.smashcast.tv/media/live/';
+            for (let f of response.following)
+            {
+                if (f.user_name && f.user_logo_small)
+                {
+                    follows.push(new Follow({userName: f.user_name, avatarUrl: 'http://edge.sf.hitbox.tv' + f.user_logo_small, link: 'https://www.smashcast.tv/' + f.user_name}));
+                    mediaUrl += f.user_name + ',';
+                }
+            }
+            
+            let mediaResponse = await Misc.fetchGet(mediaUrl, {}, {});
+            if (!mediaResponse || !mediaResponse.livestream)
+                return await this.setFollowError();
+            for (let l of mediaResponse.livestream)
+                Misc.updateMatchingObjects(follows, 'userName', l.media_user_name, {online: l.media_is_live === '1', viewerCount: l.media_views ? Number(l.media_views) : 0, activityName: l.category_name ? l.category_name : ''});
+            
+            index += MaxCount;
+            if (index < Number(response.max_results))
+                return await getFollowPage(index);
+            else
+                return follows;
         };
         return await getFollowPage(0);
     }
@@ -347,10 +406,43 @@ class YouTube extends Agent
     }
 }
 
+class Facebook extends Agent
+{
+    constructor()
+    {
+        super('Facebook');
+    }
+    async getNewFollows()
+    {
+        let name = 'disguisedtoast';
+        let online = false;
+        let activity = '';
+        let response = await Misc.fetchHtml('https://m.facebook.com/' + name + '/live', {}, {});
+        LOG(response);
+        LOG(JSON.stringify(response).length);
+        var element = document.createElement('html');
+        element.innerHTML = response;
+        let videoElements = element.getElementsByClassName('_52ja');
+        if (videoElements.length > 0)
+        {
+            let liveIndex = videoElements[0].innerText.indexOf('is live now');
+            online = liveIndex !== -1;
+            let playingStr = 'playing ';
+            let playingIndex = videoElements[0].innerText.indexOf(playingStr);
+            if (playingIndex !== -1)
+            {
+                let periodIndex = videoElements[0].innerText.indexOf('.', playingIndex + playingStr.length);
+                activity = videoElements[0].innerText.substring(playingIndex + playingStr.length, periodIndex === -1 ? playingIndex + 30 : periodIndex);
+            }
+        }
+        LOG(name, online, activity);
+    }
+}
+
 let twitch = new Twitch();
 
 module.exports = {
-    agents: [new Mixer(), twitch, new DLive(), new YouTube()],
+    agents: [new Mixer(), twitch, new DLive(), new Smashcast(), new YouTube()],
     twitch: twitch,
     ConnectType: ConnectType
 }

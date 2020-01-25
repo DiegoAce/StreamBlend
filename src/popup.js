@@ -12,7 +12,7 @@ let emptyTextElement = document.getElementById('emptyTextId');
 let gearButton = document.getElementById('gearId');
 gearButton.onclick = (event)=>{ chrome.tabs.create({url: 'options.html'}); };
 
-chrome.storage.local.get([Constants.DarkModeName], (obj)=>{ document.body.className = obj[Constants.DarkModeName] ? 'darkScheme' : 'lightScheme'; });
+Misc.getStorage(Constants.DarkModeName).then((dark)=>{ document.body.className = dark ? 'darkScheme' : 'lightScheme'; });
 
 async function setErrorElement()
 {
@@ -27,15 +27,16 @@ async function setErrorElement()
     errorElement.style.display = 'none';
 }
 
-function updateFollowElements()
+async function updateFollowElements()
 {
     let follows = [];
+    let dark = await Misc.getStorage(Constants.DarkModeName);
     for (let a of agents)
     {
         if (a.follows)
         {
             for (let f of a.follows)
-                f.agentName = a.name;
+                f.agentImage = await a.getImage(dark);
             follows = [...follows, ...a.follows];
         }
     }
@@ -50,8 +51,11 @@ function updateFollowElements()
                                 <div class="channelName">' + f.userName + '</div> \
                                 <div class="activityName">' + (f.online ? f.activityName : '') + '</div> \
                                 <div class="viewerCount">' + (f.online ? Misc.abbreviateNumber(f.viewerCount) : 'Offline') + '</div> \
-                                <img class="agentImage" src="images/' + f.agentName.toLowerCase() + '.svg" alt=""> \
+                                <img class="agentImage" src="images/' + f.agentImage + '" alt=""> \
                             </a>';
+        element.onclick = ()=>{ chrome.tabs.query({active: true, currentWindow: true}, (tabs)=>{ chrome.tabs.update(tabs[0].id, {url: f.link}); }); return false; };
+        let avatarElement = element.getElementsByClassName('channel')[0].getElementsByClassName('avatar')[0];
+        avatarElement.onerror = (element)=>{ avatarElement.onerror = null; avatarElement.src = 'images/defaultUser.svg'; };
         channelsElement.appendChild(element);
     }
 }
@@ -74,7 +78,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
                 for (let a2 of agents)
                     anyRefreshing |= await a2.getRefreshingFollows();
                 a.follows = await a.getFollows();
-                updateFollowElements();
+                await updateFollowElements();
                 if (!anyRefreshing)
                     loaderElement.style.display = 'none';
                 if (!anyRefreshing || channelsElement.firstChild)

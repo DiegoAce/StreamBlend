@@ -1,0 +1,131 @@
+
+
+.streamBlendSideBarExpanded, .streamBlendSideBarCollapsed {
+    z-index: 1;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 225px;
+    height: 100%;
+    margin-top: inherit;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background: #212C3D;
+    color: #DDDDDD;
+    box-shadow: -3px 0px 6px 0px #000000;
+    font-family: texgyreheros;
+    font-size: 12px;
+}
+
+.streamBlendSideBarCollapsed {
+    width: 50px;
+}
+
+.streamBlendFollowed {
+    display: block;
+    margin: 15px 0px 15px 12px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.streamBlendArrowExpanded, .streamBlendArrowCollapsed {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+}
+
+.streamBlendArrowExpanded {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.streamBlendArrowCollapsed {
+    margin: 11px 10px;
+}
+
+.streamBlendArrowExpandedImg, .streamBlendArrowCollapsedImg {
+    filter: brightness(.8);
+    width: 18px;
+    height: auto;
+    margin: 6px;
+}
+
+.streamBlendArrowCollapsedImg {
+    transform: scaleX(-1);
+}
+
+.streamBlendEmptyText {
+    display: block;
+    margin: 10px;
+}
+
+.streamBlendChannel {
+    position: relative;
+    display: block;
+    height: 42px;
+    margin: 0px 10px;
+    cursor: pointer;
+    color: #DDDDDD;
+}
+
+.streamBlendChannel:hover, .streamBlendArrowExpanded:hover, .streamBlendArrowCollapsed:hover {
+    background-color: #424b5a;
+}
+
+.streamBlendChannel:link, .streamBlendChannel:hover, .streamBlendChannel:active, .streamBlendChannel:visited {
+    color: #DDDDDD;
+    text-decoration: none;
+    border: none;
+    outline: none;
+}
+
+.streamBlendAvatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;
+    top: 5px;
+    left: 0px;
+}
+
+.streamBlendOffline {
+    filter: grayscale(100%);
+}
+
+.streamBlendChannelName, .streamBlendActivityName {
+    position: absolute;
+    width: 140px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.streamBlendChannelName {
+    top: 2px;
+    left: 40px;
+    font-weight: bold;
+}
+
+.streamBlendActivityName {
+    position: absolute;
+    top: 18px;
+    left: 40px;
+    color: #999999;
+}
+
+.streamBlendViewerCount {
+    position: absolute;
+    top: 2px;
+    right: 0px;
+}
+
+.streamBlendAgentImage {
+    height: 12px;
+    width: auto;
+    position: absolute;
+    bottom: 6px;
+    right: 0px;
+}

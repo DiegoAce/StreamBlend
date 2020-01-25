@@ -79,6 +79,11 @@ body {
     align-items: center;
 }
 
+.checkBox {
+    display: inline-block;
+    margin-left: 275px;
+}
+
 .infoText {
     display: block;
     text-align: center;

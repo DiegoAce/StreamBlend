@@ -25,8 +25,11 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
     LOG("background received message:", request.type);
     switch (request.type)
     {
-    case Constants.ContentTabIdMsg:
-        tabIds.content = sender.tab.id;
+    case Constants.TwitchTabIdMsg:
+        tabIds.twitch = sender.tab.id;
+        break;
+    case Constants.MixerTabIdMsg:
+        tabIds.mixer = sender.tab.id;
         break;
     case Constants.OptionsTabIdMsg:
         tabIds.options = sender.tab.id;
@@ -74,5 +77,3 @@ document.body.appendChild(oauthIFrameElement);
 setErrorBadge();
 for (let a of agents)
     a.setRefreshingFollows(false);
-
-

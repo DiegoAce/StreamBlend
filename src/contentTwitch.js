@@ -133,7 +133,7 @@ function refresh()
 
 chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
 {
-    LOG("content received message:", request.type);
+    LOG("twitch content received message:", request.type);
     switch (request.type)
     {
     default:
@@ -154,7 +154,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse)=>
     sendResponse({});
 });
 
-chrome.runtime.sendMessage({type: Constants.ContentTabIdMsg});
+chrome.runtime.sendMessage({type: Constants.TwitchTabIdMsg});
 
 let mutationObserver = new MutationObserver((mutations) =>
 {

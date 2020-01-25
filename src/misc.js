@@ -81,6 +81,16 @@ module.exports = {
         parentNode.insertBefore(childNode, parentNode.childNodes[index]); //an index greater than childNodes length returns undefined causing insertBefore to insert at end as desired
     },
     
+    getStorage: (name) =>
+    {
+        return new Promise((resolve)=>{ chrome.storage.local.get([name], (obj)=>{ resolve(obj[name]); }); });
+    },
+    
+    setStorage: (name, obj) =>
+    {
+        return new Promise((resolve)=>{ chrome.storage.local.set({[name]: obj}, ()=>{ resolve(); }); });
+    },
+    
     getUrlParam: (url, param) =>
     {
         let u = new URL(url);
