@@ -8,7 +8,7 @@
 <img src="https://user-images.githubusercontent.com/19171919/73125280-bb51b980-3f6a-11ea-88ba-7b7010d2ee85.jpg" alt="" height="200px">
 </p>
 
-StreamBlend is a browser extension that blends your [Mixer](http://mixer.com), [Twitch](https://www.twitch.tv), [YouTube](https://www.youtube.com), and [DLive](https://dlive.tv/)  follows into one list, merges them into the Twitch sidebar, and shows an optional side bar on Mixer.
+StreamBlend is a browser extension that blends your [Mixer](http://mixer.com), [Twitch](https://www.twitch.tv), [YouTube](https://www.youtube.com), and [DLive](https://dlive.tv/) follows into one drop down list, merges them into the Twitch sidebar, and shows an optional sidebar on Mixer.
 
 If you have questions, concerns, need help, or just want to say hi, you can reach me at streamblend@gmail.com.
 

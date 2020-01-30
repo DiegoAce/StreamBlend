@@ -149,7 +149,7 @@ class Twitch extends Agent
             if (streamFollowIndex < follows.length)
             {
                 const MaxItems = 100;
-                let currentFollows = follows.slice(streamFollowIndex, MaxItems);
+                let currentFollows = follows.slice(streamFollowIndex, streamFollowIndex + MaxItems);
                 let usersUrl = 'https://api.twitch.tv/helix/users?';
                 let streamsUrl = 'https://api.twitch.tv/helix/streams?';
                 for (let f of currentFollows)
