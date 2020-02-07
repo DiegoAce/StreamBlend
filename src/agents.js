@@ -194,6 +194,7 @@ class Mixer extends Agent
     {
         super('Mixer');
         this.userNameDescription = 'username';
+        this.headers = {'Client-ID': 'e5e7f2d486725a7896b21e508ac6c828ee592c03fb93345e'};
     }
     async getImage(dark)
     {
@@ -201,7 +202,7 @@ class Mixer extends Agent
     }
     async setAuth(userName)
     {
-        let response = await Misc.fetchGet('https://mixer.com/api/v1/channels/' + userName, {}, {});
+        let response = await Misc.fetchGet('https://mixer.com/api/v1/channels/' + userName, {}, this.headers);
         if (!response || !response.userId)
             return await this.setUserNameError();
         await this.setUserName(response.token);
@@ -213,7 +214,7 @@ class Mixer extends Agent
         let follows = [];
         let getFollowPage = async (page)=>
         {
-            let response = await Misc.fetchGet('https://mixer.com/api/v1/users/' + userId + '/follows', {page: page, limit: 100}, {});
+            let response = await Misc.fetchGet('https://mixer.com/api/v1/users/' + userId + '/follows', {page: page, limit: 100}, this.headers);
             if (!response)
                 return await this.setFollowError();
             for (let r of response)

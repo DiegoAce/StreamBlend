@@ -91,6 +91,14 @@ module.exports = {
         return new Promise((resolve)=>{ chrome.storage.local.set({[name]: obj}, ()=>{ resolve(); }); });
     },
     
+    iteratorToObject: (it) =>
+    {
+        let obj = {};
+        for (let pair of it)
+            obj[pair[0]] = pair[1];
+        return obj;
+    },
+    
     getUrlParam: (url, param) =>
     {
         let u = new URL(url);
@@ -122,9 +130,13 @@ module.exports = {
             fetch(url, {...params, ...{method: method, headers: {...headers, ...{'Accept': 'application/json', 'Content-Type': 'application/json'}}}})
             .then((res) =>
             {
-                let error = res.status < 200 || res.status >= 400;
                 res.json()
-                .then((res) => { FLOG(res, error); resolve(error ? null : res); })
+                .then((json) =>
+                {
+                    let error = res.status < 200 || res.status >= 400;
+                    FLOG(json, module.exports.iteratorToObject(res.headers.entries()), error);
+                    resolve(error ? null : json);
+                })
                 .catch((error) => { FLOG(error); resolve(); });
             })
             .catch((error) =>{ FLOG(error); resolve(); });
@@ -150,9 +162,13 @@ module.exports = {
             fetch(url, params)
             .then((res) =>
             {
-                let error = res.status < 200 || res.status >= 400;
                 res.text()
-                .then((res) => { FLOG(res, error); resolve(error ? null : res); })
+                .then((text) =>
+                {
+                    let error = res.status < 200 || res.status >= 400;
+                    FLOG(text, module.exports.iteratorToObject(res.headers.entries()), error);
+                    resolve(error ? null : text);
+                })
                 .catch((error) => { FLOG(error); resolve(); });
             })
             .catch((error) => { FLOG(error); resolve(); });
