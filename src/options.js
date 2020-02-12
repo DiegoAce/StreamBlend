@@ -25,10 +25,9 @@ async function setErrors()
         let error = await a.getError();
         if (error)
         {
-            a.errorElement.innerHTML = '<div class="row"> \
-                                            <div class="errorText">' + error + '</div> \
-                                            <div class="errorButton">x</div> \
-                                        </div>';
+            a.errorElement = Misc.createDOMElement('div', {style: '', className: 'row'});
+            a.errorElement.appendChild(Misc.createDOMElement('div', {className: 'errorText', textContent: error}));
+            a.errorElement.appendChild(Misc.createDOMElement('div', {className: 'errorButton', textContent: 'x'}));
             a.errorElement.getElementsByClassName('errorButton')[0].onclick = (element)=>{ a.setError(''); };
             nodes.push(a.errorElement);
         }
@@ -52,7 +51,8 @@ async function setAgentConnect(a)
         {
             a.connectElement.getElementsByClassName('joinedInput')[0].style.display = 'none';
             a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'inline';
-            a.connectElement.getElementsByClassName('joinedInfo')[0].innerHTML = 'Connected as <b>' + userName + '</b>';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].appendChild(document.createTextNode('Connected as '));
+            a.connectElement.getElementsByClassName('joinedInfo')[0].appendChild(Misc.createDOMElement('b', {textContent: userName}));
             a.connectElement.getElementsByClassName('joinedConnect')[0].style.display = 'none';
             a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'inline';
         }
@@ -68,7 +68,8 @@ async function setAgentConnect(a)
         if (userName)
         {
             a.connectElement.getElementsByClassName('joinedInfo')[0].style.display = 'inline';
-            a.connectElement.getElementsByClassName('joinedInfo')[0].innerHTML = 'Connected as <b>' + userName + '</b>';
+            a.connectElement.getElementsByClassName('joinedInfo')[0].appendChild(document.createTextNode('Connected as '));
+            a.connectElement.getElementsByClassName('joinedInfo')[0].appendChild(Misc.createDOMElement('b', {textContent: userName}));
             a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';
             a.connectElement.getElementsByClassName('joinedDisconnect')[0].style.display = 'inline';
         }
@@ -100,20 +101,18 @@ async function setConnects()
     let dark = await Misc.getStorage(Constants.DarkModeName);
     for (let a of agents)
     {
-        a.errorElement = document.createElement('div');
-        a.connectElement = document.createElement('div');
+        a.connectElement = Misc.createDOMElement('div', {className: 'row'});
         connectElement.appendChild(a.connectElement);
         switch (a.connectType)
         {
         case ConnectType.UserName:
-            a.connectElement.innerHTML =    '<div class="row"> \
-                                                <div class="accountImage"><img src="images/' + (await a.getImage(dark)) + '" alt=""></div> \
-                                                <input class="joinedInput" placeholder="Enter your '+ a.name + ' ' + a.userNameDescription + '"> \
-                                                <div class="joinedInfo"></div> \
-                                                <div class="joinedConnect">Connect</div> \
-                                                <div class="joinedDisconnect">Disconnect</div> \
-                                                <div class="loader"></div> \
-                                            </div>';
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'accountImage'}));
+            a.connectElement.childNodes[a.connectElement.childNodes.length - 1].appendChild(Misc.createDOMElement('img', {src: 'images/' + (await a.getImage(dark)), alt: ''}));
+            a.connectElement.appendChild(Misc.createDOMElement('input', {className: 'joinedInput', placeholder: 'Enter your ' + a.name + ' ' + a.userNameDescription}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'joinedInfo'}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'joinedConnect', textContent: 'Connect'}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'joinedDisconnect', textContent: 'Disconnect'}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'loader'}));
             a.connectElement.getElementsByClassName('joinedConnect')[0].onclick = async (element)=>
             {
                 if (!a.connectElement.getElementsByClassName('joinedInput')[0].value)
@@ -135,13 +134,12 @@ async function setConnects()
             });
             break;
         case ConnectType.OAuth:
-            a.connectElement.innerHTML =    '<div class="row"> \
-                                                <div class="accountImage"><img src="images/' + (await a.getImage(dark)) + '" alt=""></div> \
-                                                <div class="singleButton">Connect ' + a.name + '</div> \
-                                                <div class="joinedInfo"></div> \
-                                                <div class="joinedDisconnect">Disconnect</div> \
-                                                <div class="loader"></div> \
-                                            </div>';
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'accountImage'}));
+            a.connectElement.childNodes[a.connectElement.childNodes.length - 1].appendChild(Misc.createDOMElement('img', {src: 'images/' + (await a.getImage(dark)), alt: ''}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'singleButton', textContent: 'Connect ' + a.name}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'joinedInfo'}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'joinedDisconnect', textContent: 'Disconnect'}));
+            a.connectElement.appendChild(Misc.createDOMElement('div', {className: 'loader'}));
             a.connectElement.getElementsByClassName('singleButton')[0].onclick = async (element)=>
             {
                 a.connectElement.getElementsByClassName('singleButton')[0].style.display = 'none';

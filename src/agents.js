@@ -415,28 +415,28 @@ class Facebook extends Agent
     }
     async getNewFollows()
     {
-        let name = 'disguisedtoast';
-        let online = false;
-        let activity = '';
-        let response = await Misc.fetchHtml('https://m.facebook.com/' + name + '/live', {}, {});
-        LOG(response);
-        LOG(JSON.stringify(response).length);
-        var element = document.createElement('html');
-        element.innerHTML = response;
-        let videoElements = element.getElementsByClassName('_52ja');
-        if (videoElements.length > 0)
-        {
-            let liveIndex = videoElements[0].innerText.indexOf('is live now');
-            online = liveIndex !== -1;
-            let playingStr = 'playing ';
-            let playingIndex = videoElements[0].innerText.indexOf(playingStr);
-            if (playingIndex !== -1)
-            {
-                let periodIndex = videoElements[0].innerText.indexOf('.', playingIndex + playingStr.length);
-                activity = videoElements[0].innerText.substring(playingIndex + playingStr.length, periodIndex === -1 ? playingIndex + 30 : periodIndex);
-            }
-        }
-        LOG(name, online, activity);
+//        let name = 'disguisedtoast';
+//        let online = false;
+//        let activity = '';
+//        let response = await Misc.fetchHtml('https://m.facebook.com/' + name + '/live', {}, {});
+//        LOG(response);
+//        LOG(JSON.stringify(response).length);
+//        var element = document.createElement('html');
+//        element.innerHTML = response;
+//        let videoElements = element.getElementsByClassName('_52ja');
+//        if (videoElements.length > 0)
+//        {
+//            let liveIndex = videoElements[0].innerText.indexOf('is live now');
+//            online = liveIndex !== -1;
+//            let playingStr = 'playing ';
+//            let playingIndex = videoElements[0].innerText.indexOf(playingStr);
+//            if (playingIndex !== -1)
+//            {
+//                let periodIndex = videoElements[0].innerText.indexOf('.', playingIndex + playingStr.length);
+//                activity = videoElements[0].innerText.substring(playingIndex + playingStr.length, periodIndex === -1 ? playingIndex + 30 : periodIndex);
+//            }
+//        }
+//        LOG(name, online, activity);
     }
 }
 

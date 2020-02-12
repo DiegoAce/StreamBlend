@@ -99,6 +99,14 @@ module.exports = {
         return obj;
     },
     
+    createDOMElement: (tagName, attributes) =>
+    {
+        let element = document.createElement(tagName);
+        for (let key in attributes)
+            element[key] = attributes[key];
+        return element;
+    },
+    
     getUrlParam: (url, param) =>
     {
         let u = new URL(url);

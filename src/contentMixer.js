@@ -28,33 +28,26 @@ async function updateFollowElements()
         channelsElement.firstChild.remove();
     for (let f of follows)
     {
-        let element = document.createElement('div');
-        if (collapsed)
-        {
-            element.innerHTML = '<a class="streamBlendChannel" href="'+f.link+'"> \
-                                    <img class="streamBlendAvatar' + (f.online ? '' : ' streamBlendOffline') + '" src="' + f.avatarUrl + '" alt=""> \
-                                </a>';
-        }
-        else
-        {
-            element.innerHTML = '<a class="streamBlendChannel" href="'+f.link+'"> \
-                                    <img class="streamBlendAvatar' + (f.online ? '' : ' streamBlendOffline') + '" src="' + f.avatarUrl + '" alt=""> \
-                                    <div class="streamBlendChannelName">' + f.userName + '</div> \
-                                    <div class="streamBlendActivityName">' + (f.online ? f.activityName : '') + '</div> \
-                                    <div class="streamBlendViewerCount">' + (f.online ? Misc.abbreviateNumber(f.viewerCount) : 'Offline') + '</div> \
-                                    <img class="streamBlendAgentImage" src="' + chrome.runtime.getURL('images/' + f.agentImage) + '" alt=""> \
-                                </a>';
-        }
-        let avatarElement = element.getElementsByClassName('streamBlendChannel')[0].getElementsByClassName('streamBlendAvatar')[0];
+        let element = Misc.createDOMElement('a', {className: 'streamBlendChannel', href: f.link});
+        let avatarElement = Misc.createDOMElement('img', {className: 'streamBlendAvatar' + (f.online ? '' : ' streamBlendOffline'), src: f.avatarUrl, alt: ''});
         avatarElement.onerror = (element)=>{ avatarElement.onerror = null; avatarElement.src = 'images/defaultUser.svg'; };
+        element.appendChild(avatarElement);
+        if (!collapsed)
+        {
+            element.appendChild(Misc.createDOMElement('div', {className: 'streamBlendChannelName', textContent: f.userName}));
+            element.appendChild(Misc.createDOMElement('div', {className: 'streamBlendActivityName', textContent: (f.online ? f.activityName : '')}));
+            element.appendChild(Misc.createDOMElement('div', {className: 'streamBlendViewerCount', textContent: (f.online ? Misc.abbreviateNumber(f.viewerCount) : 'Offline')}));
+            element.appendChild(Misc.createDOMElement('img', {className: 'streamBlendAgentImage', src: chrome.runtime.getURL('images/' + f.agentImage), alt: ''}));
+        }
         channelsElement.appendChild(element);
     }
     if (!channelsElement.firstChild)
     {
-        
         let element = document.createElement('div');
-        element.classList = 'streamBlendEmptyText';
-        element.innerHTML = 'No channels to show.<br />Click on the StreamBlend browser toolbar icon to connect your accounts.';
+        element.className = 'streamBlendEmptyText';
+        element.appendChild(document.createTextNode('No channels to show.'));
+        element.appendChild(document.createElement('br'));
+        element.appendChild(document.createTextNode('Click on the StreamBlend browser toolbar icon to connect your accounts.'));
         channelsElement.appendChild(element);
     }
 }
@@ -81,19 +74,19 @@ async function setSideBar()
     if (collapsed)
     {
         contentElement.style = 'margin-left: 50px;';
-        sideBarElement.classList = 'streamBlendSideBarCollapsed';
-        arrowElement.classList = 'streamBlendArrowCollapsed';
-        arrowImgElement.classList = 'streamBlendArrowCollapsedImg';
+        sideBarElement.className = 'streamBlendSideBarCollapsed';
+        arrowElement.className = 'streamBlendArrowCollapsed';
+        arrowImgElement.className = 'streamBlendArrowCollapsedImg';
     }
     else
     {
         contentElement.style = 'margin-left: 225px;';
-        sideBarElement.classList = 'streamBlendSideBarExpanded';
+        sideBarElement.className = 'streamBlendSideBarExpanded';
         let followedElement = document.createElement('div');
-        followedElement.classList = 'streamBlendFollowed';
+        followedElement.className = 'streamBlendFollowed';
         followedElement.textContent = 'FOLLOWED CHANNELS';
-        arrowElement.classList = 'streamBlendArrowExpanded';
-        arrowImgElement.classList = 'streamBlendArrowExpandedImg';
+        arrowElement.className = 'streamBlendArrowExpanded';
+        arrowImgElement.className = 'streamBlendArrowExpandedImg';
         sideBarElement.appendChild(followedElement);
     }
     arrowElement.appendChild(arrowImgElement);

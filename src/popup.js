@@ -45,17 +45,15 @@ async function updateFollowElements()
         channelsElement.firstChild.remove();
     for (let f of follows)
     {
-        let element = document.createElement('div');
-        element.innerHTML = '<a class="channel" href="'+f.link+'"> \
-                                <img class="avatar' + (f.online ? '' : ' offline') + '" src="' + f.avatarUrl + '" alt=""> \
-                                <div class="channelName">' + f.userName + '</div> \
-                                <div class="activityName">' + (f.online ? f.activityName : '') + '</div> \
-                                <div class="viewerCount">' + (f.online ? Misc.abbreviateNumber(f.viewerCount) : 'Offline') + '</div> \
-                                <img class="agentImage" src="images/' + f.agentImage + '" alt=""> \
-                            </a>';
-        element.onclick = ()=>{ chrome.tabs.query({active: true, currentWindow: true}, (tabs)=>{ chrome.tabs.update(tabs[0].id, {url: f.link}); }); return false; };
-        let avatarElement = element.getElementsByClassName('channel')[0].getElementsByClassName('avatar')[0];
+        let element = Misc.createDOMElement('a', {className: 'channel', href: f.link});
+        let avatarElement = Misc.createDOMElement('img', {className: 'avatar' + (f.online ? '' : ' offline'), src: f.avatarUrl, alt: ''});
         avatarElement.onerror = (element)=>{ avatarElement.onerror = null; avatarElement.src = 'images/defaultUser.svg'; };
+        element.appendChild(avatarElement);
+        element.appendChild(Misc.createDOMElement('div', {className: 'channelName', textContent: f.userName}));
+        element.appendChild(Misc.createDOMElement('div', {className: 'activityName', textContent: (f.online ? f.activityName : '')}));
+        element.appendChild(Misc.createDOMElement('div', {className: 'viewerCount', textContent: (f.online ? Misc.abbreviateNumber(f.viewerCount) : 'Offline')}));
+        element.appendChild(Misc.createDOMElement('img', {className: 'agentImage', src: 'images/' + f.agentImage, alt: ''}));
+        element.onclick = ()=>{ chrome.tabs.query({active: true, currentWindow: true}, (tabs)=>{ chrome.tabs.update(tabs[0].id, {url: f.link}); }); return false; };
         channelsElement.appendChild(element);
     }
 }

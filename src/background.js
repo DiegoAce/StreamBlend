@@ -77,3 +77,4 @@ document.body.appendChild(oauthIFrameElement);
 setErrorBadge();
 for (let a of agents)
     a.setRefreshingFollows(false);
+

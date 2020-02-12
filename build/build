@@ -46,7 +46,7 @@ if [ "$outFolder" == "release" ]; then
     for folder in ${folders[*]}
     do
         cd $DIR/$outFolder/$folder
-        zip -rX $DIR/$outFolder/$folder.zip ./*
+        zip -rX $DIR/$outFolder/$folder.zip ./* -x "*.DS_Store"
     done
 fi
 

@@ -2,7 +2,7 @@
     
     "manifest_version": 2,
     "name": "StreamBlend",
-    "version": "1.11",
+    "version": "1.12",
     "description": "Blends your follows from multiple sites into one list.",
     "icons": {
         "16": "images/16.png",
