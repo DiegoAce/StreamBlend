@@ -6,7 +6,7 @@ const Constants = require('./constants');
 let {agents} = require('./agents');
 let tabIds = {};
 
-async function setErrorBadge()
+async function setBadge()
 {
     for (let a of agents)
     {
@@ -16,6 +16,20 @@ async function setErrorBadge()
             chrome.browserAction.setBadgeText({text: '!'});
             return;
         }
+    }
+    if (!(await Misc.getStorage(Constants.HideCountBadgeName)))
+    {
+        let count = 0;
+        for (let a of agents)
+        {
+            let follows = await a.getFollows();
+            for (let f of follows)
+                if (f.online)
+                    count++;
+        }
+        chrome.browserAction.setBadgeBackgroundColor({ color: [100, 100, 100, 255] });
+        chrome.browserAction.setBadgeText({text: String(count)});
+        return;
     }
     chrome.browserAction.setBadgeText({text: ''});
 }
@@ -34,6 +48,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
     case Constants.OptionsTabIdMsg:
         tabIds.options = sender.tab.id;
         break;
+    case Constants.HideCountBadgeMsg:
+        await setBadge();
+        break;
     default:
         for (let a of agents)
         {
@@ -41,6 +58,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
             {
             case a.msgRefreshFollows:
                 await a.refreshFollows();
+                await setBadge();
                 a.sendMsgFollowsRefreshed(tabIds);
                 break;
             default:
@@ -62,7 +80,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) =>
             {
             case a.varError:
                 a.sendMsgError(tabIds);
-                await setErrorBadge();
+                await setBadge();
                 break;
             default:
                 break;
@@ -74,7 +92,7 @@ chrome.storage.onChanged.addListener(async (changes, areaName) =>
 let oauthIFrameElement = document.createElement('iframe');
 oauthIFrameElement.id = Constants.OAuthIFrameId;
 document.body.appendChild(oauthIFrameElement);
-setErrorBadge();
+setBadge();
 for (let a of agents)
     a.setRefreshingFollows(false);
 

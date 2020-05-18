@@ -9,6 +9,8 @@ module.exports = {
     OAuthIFrameId: 'OAuthIFrameId',
     DarkModeName: 'DarkMode',
     HideOfflineName: 'HideOffline',
-    HideMixerSideBarName: 'HideMixerSideBar'
+    HideMixerSideBarName: 'HideMixerSideBar',
+    HideCountBadgeName: 'HideCountBadge',
+    HideCountBadgeMsg: 'HideCountBadgeMsg'
     
 };

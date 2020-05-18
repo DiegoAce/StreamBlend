@@ -9,6 +9,7 @@ let connectElement = document.getElementById('connectId');
 let darkModeElement = document.getElementById('darkModeId');
 let hideOfflineElement = document.getElementById('hideOfflineId');
 let hideMixerSideBarElement = document.getElementById('hideMixerSideBarId');
+let hideCountBadgeElement = document.getElementById('hideCountBadgeId');
 
 async function setColorScheme()
 {
@@ -214,6 +215,12 @@ Misc.getStorage(Constants.HideMixerSideBarName).then((show)=>{ hideMixerSideBarE
 hideMixerSideBarElement.onclick = async (element)=>
 {
     await Misc.setStorage(Constants.HideMixerSideBarName, hideMixerSideBarElement.checked);
+};
+Misc.getStorage(Constants.HideCountBadgeName).then((show)=>{ hideCountBadgeElement.checked = Boolean(show); });
+hideCountBadgeElement.onclick = async (element)=>
+{
+    await Misc.setStorage(Constants.HideCountBadgeName, hideCountBadgeElement.checked);
+    chrome.runtime.sendMessage({type: Constants.HideCountBadgeMsg});
 };
 document.getElementById('refreshFollowsId').onclick = refreshFollows;
 

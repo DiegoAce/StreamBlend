@@ -118,23 +118,35 @@ class Twitch extends Agent
     {
         super('Twitch');
         this.userNameDescription = 'login name';
-        this.headers = {'Client-ID': 'vc9ta3qi9it37arr8en37ovx1hgmvl'};
+        this.clientId = 'vc9ta3qi9it37arr8en37ovx1hgmvl';
+        this.connectType = ConnectType.OAuth;
     }
-    async setAuth(userName)
+    async getAuthUrl()
     {
-        let response = await Misc.fetchGet('https://api.twitch.tv/helix/users', {login: userName}, this.headers);
-        if (!response || !response.data || !response.data[0] || !response.data[0].login || !response.data[0].id)
-            return await this.setUserNameError();
-        await this.setUserName(response.data[0].login);
-        await this.setUserId(response.data[0].id);
+        let params = {client_id: this.clientId, redirect_uri: 'https://streamblend.github.io/oauth', response_type: 'token', scope: 'user:read:email'};
+        return Misc.getUrl('https://id.twitch.tv/oauth2/authorize', params);
+    }
+    async setAuth(url)
+    {
+        let token = Misc.getUrlParam(url, 'access_token');
+        if (!token)
+            return await this.setOAuthError();
+        LOG(this.name, 'got token', token);
+        let response = await Misc.fetchGet('https://id.twitch.tv/oauth2/validate', {}, {'Authorization': 'OAuth ' + token});
+        if (!response || !response.login || !response.user_id)
+            return await this.setOAuthError();
+        await this.setAccessToken(token);
+        await this.setUserName(response.login);
+        await this.setUserId(response.user_id);
     }
     async getNewFollows()
     {
         let userId = await this.getUserId();
+        let headers = {'Client-ID': this.clientId, 'Authorization': 'Bearer ' + await this.getAccessToken()}
         let follows = [];
         let getFollowPage = async (page)=>
         {
-            let response = await Misc.fetchGet('https://api.twitch.tv/helix/users/follows', {from_id: userId, first: 100, after: page}, this.headers);
+            let response = await Misc.fetchGet('https://api.twitch.tv/helix/users/follows', {from_id: userId, first: 100, after: page}, headers);
             if (!response)
                 return await this.setFollowError();
             for (let user of response.data)
@@ -157,12 +169,12 @@ class Twitch extends Agent
                     usersUrl += 'id=' + f.userId + '&';
                     streamsUrl += 'user_id=' + f.userId + '&';
                 }
-                let response = await Misc.fetchGet(usersUrl, {}, this.headers);
+                let response = await Misc.fetchGet(usersUrl, {}, headers);
                 if (!response)
                     return await this.setFollowError();
                 for (let d of response.data)
                     Misc.updateMatchingObjects(follows, 'userId', d.id, {userName: d.display_name, avatarUrl: d.profile_image_url, link: 'https://www.twitch.tv/' + d.login});
-                response = await Misc.fetchGet(streamsUrl, {}, this.headers);
+                response = await Misc.fetchGet(streamsUrl, {}, headers);
                 if (!response)
                     return await this.setFollowError();
                 if (response.data && response.data.length > 0)
@@ -173,7 +185,7 @@ class Twitch extends Agent
                         Misc.updateMatchingObjects(follows, 'userId', d.user_id, {activityId: d.game_id, online: d.type === 'live', viewerCount: d.viewer_count});
                         gamesUrl += 'id=' + d.game_id + '&';
                     }
-                    response = await Misc.fetchGet(gamesUrl, {}, this.headers);
+                    response = await Misc.fetchGet(gamesUrl, {}, headers);
                     if (!response)
                         return await this.setFollowError();
                     for (let d of response.data)
