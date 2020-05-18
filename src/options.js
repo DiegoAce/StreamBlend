@@ -220,7 +220,6 @@ Misc.getStorage(Constants.HideCountBadgeName).then((show)=>{ hideCountBadgeEleme
 hideCountBadgeElement.onclick = async (element)=>
 {
     await Misc.setStorage(Constants.HideCountBadgeName, hideCountBadgeElement.checked);
-    chrome.runtime.sendMessage({type: Constants.HideCountBadgeMsg});
 };
 document.getElementById('refreshFollowsId').onclick = refreshFollows;
 

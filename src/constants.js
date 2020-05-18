@@ -10,7 +10,6 @@ module.exports = {
     DarkModeName: 'DarkMode',
     HideOfflineName: 'HideOffline',
     HideMixerSideBarName: 'HideMixerSideBar',
-    HideCountBadgeName: 'HideCountBadge',
-    HideCountBadgeMsg: 'HideCountBadgeMsg'
+    HideCountBadgeName: 'HideCountBadge'
     
 };

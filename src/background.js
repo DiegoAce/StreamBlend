@@ -23,9 +23,10 @@ async function setBadge()
         for (let a of agents)
         {
             let follows = await a.getFollows();
-            for (let f of follows)
-                if (f.online)
-                    count++;
+            if (follows && follows.length > 0)
+                for (let f of follows)
+                    if (f.online)
+                        count++;
         }
         chrome.browserAction.setBadgeBackgroundColor({ color: [100, 100, 100, 255] });
         chrome.browserAction.setBadgeText({text: String(count)});
@@ -47,9 +48,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) =>
         break;
     case Constants.OptionsTabIdMsg:
         tabIds.options = sender.tab.id;
-        break;
-    case Constants.HideCountBadgeMsg:
-        await setBadge();
         break;
     default:
         for (let a of agents)
@@ -85,6 +83,14 @@ chrome.storage.onChanged.addListener(async (changes, areaName) =>
             default:
                 break;
             }
+        }
+        switch (key)
+        {
+        case Constants.HideCountBadgeName:
+            await setBadge();
+            break;
+        default:
+            break;
         }
     }
 });
